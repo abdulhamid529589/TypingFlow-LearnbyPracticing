@@ -1,0 +1,2590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>TypeMaster — Multilingual Typing Practice</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Nastaliq+Urdu:wght@400;700&family=Noto+Sans+Bengali:wght@400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   TypeMaster — Single unified stylesheet, zero duplicate rules
+   Layout: body > header > lbar > (main pages) > nav
+   All pages: display:none → display:flex when .active
+═══════════════════════════════════════════════════════════════ */
+
+/* ── CUSTOM PROPERTIES ── */
+:root{
+  --bg:#0d1117; --bg2:#161b27; --bg3:#1e2535; --bg4:#252d40; --bg5:#2d3650;
+  --border:rgba(255,255,255,.07); --border2:rgba(255,255,255,.14); --border3:rgba(255,255,255,.22);
+  --text:#eef0f8; --text2:#9ba5bf; --text3:#5c6680;
+  --gold:#f5c842; --gold2:#c49a00; --gold3:rgba(245,200,66,.12);
+  --teal:#2dd4bf; --teal2:rgba(45,212,191,.12);
+  --green:#4ade80; --green2:rgba(74,222,128,.12);
+  --rose:#fb7185; --rose2:rgba(251,113,133,.12);
+  --blue:#60a5fa; --blue2:rgba(96,165,250,.12);
+  --purple:#a78bfa; --purple2:rgba(167,139,250,.12);
+  --orange:#fb923c; --orange2:rgba(251,146,60,.12);
+  --r:8px; --r2:14px; --r3:20px;
+  --hdr:52px; --lbar:42px;
+  /* Keyboard base sizes — overridden in media queries */
+  --kw:36px; --kh:38px; --kf:14px;
+  --kwide:52px; --kwider:68px; --kwidest:84px;
+}
+
+/* ── RESET ── */
+*, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+html, body { height:100%; overflow:hidden; }
+body {
+  background:var(--bg); color:var(--text);
+  font-family:'Inter',sans-serif;
+  display:flex; flex-direction:column;
+}
+
+/* ══════════════════════════════════════════════════
+   HEADER
+══════════════════════════════════════════════════ */
+.hdr {
+  height:var(--hdr); flex-shrink:0;
+  background:linear-gradient(135deg,#0e0520 0%,#0d1117 50%,#041618 100%);
+  border-bottom:1px solid var(--border);
+  display:flex; align-items:center; padding:0 16px; gap:10px;
+  position:relative; z-index:100;
+}
+.hdr-logo {
+  font-size:22px; letter-spacing:-1px; font-weight:700;
+  background:linear-gradient(135deg,var(--gold),var(--orange));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+}
+.hdr-name { font-size:14px; font-weight:700; color:var(--text); }
+.streak-chip {
+  display:flex; align-items:center; gap:4px;
+  background:var(--bg3); border:1px solid var(--border);
+  border-radius:20px; padding:3px 10px; font-size:11px;
+}
+.btn {
+  background:var(--bg3); border:1px solid var(--border2);
+  border-radius:var(--r); padding:8px 18px;
+  font-size:13px; font-weight:600; cursor:pointer;
+  color:var(--text); transition:all .15s; font-family:inherit;
+}
+.btn:hover { background:var(--bg4); border-color:var(--border3); }
+.btn.primary { background:var(--teal2); border-color:var(--teal); color:var(--teal); }
+.btn.primary:hover { background:rgba(45,212,191,.25); }
+
+/* ══════════════════════════════════════════════════
+   LANGUAGE BAR
+══════════════════════════════════════════════════ */
+.lbar {
+  height:var(--lbar); flex-shrink:0;
+  background:var(--bg2); border-bottom:1px solid var(--border);
+  display:flex; align-items:stretch;
+  overflow-x:auto; -webkit-overflow-scrolling:touch;
+}
+.lbar::-webkit-scrollbar { display:none; }
+.lb {
+  flex:1; min-width:60px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  padding:4px 8px; cursor:pointer; transition:all .15s;
+  border-bottom:3px solid transparent;
+  font-size:10px; color:var(--text3); white-space:nowrap;
+  touch-action:manipulation;
+}
+.lb:hover { color:var(--text2); background:var(--bg3); }
+.lb.active { color:var(--teal); border-bottom-color:var(--teal); }
+.lb-name { font-size:12px; font-weight:700; }
+.lb-cnt { font-size:9px; opacity:.7; }
+
+/* ══════════════════════════════════════════════════
+   PAGES — the main content area
+══════════════════════════════════════════════════ */
+/* pages container */
+.pages-wrap { flex:1; overflow:hidden; display:flex; flex-direction:column; min-height:0; }
+
+/* every page hidden by default */
+.page {
+  display:none; flex:1; flex-direction:column;
+  overflow:hidden; min-height:0;
+}
+.page.active { display:flex; }
+/* scrollable page interior */
+.p-scroll { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:16px; }
+
+/* ══════════════════════════════════════════════════
+   LESSONS LIST PAGE
+══════════════════════════════════════════════════ */
+.lessons-hdr { padding:14px 16px 8px; flex-shrink:0; }
+.lessons-hdr h2 { font-size:18px; font-weight:700; }
+.lessons-sub { font-size:12px; color:var(--text2); margin-top:2px; }
+.lessons-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(130px,1fr));
+  gap:8px; padding:0 16px 16px;
+  overflow-y:auto; flex:1; -webkit-overflow-scrolling:touch;
+}
+.lcard {
+  background:var(--bg2); border:1px solid var(--border);
+  border-radius:var(--r2); padding:12px 10px;
+  cursor:pointer; transition:all .15s; position:relative;
+  touch-action:manipulation;
+}
+.lcard:hover { background:var(--bg3); border-color:var(--border2); transform:translateY(-1px); }
+.dprog { position:absolute; top:6px; right:6px; font-size:13px; color:var(--orange); }
+.lcard:active { transform:translateY(0); }
+.lcard-num { font-size:10px; color:var(--text3); margin-bottom:2px; }
+.lcard-title { font-size:12px; font-weight:600; color:var(--text); line-height:1.3; margin-bottom:4px; }
+.lcard-sub { font-size:10px; color:var(--text2); }
+.lcard-stars { font-size:12px; margin-top:4px; }
+.lcard-wpm { font-size:10px; color:var(--teal); margin-top:2px; }
+.phase-sep {
+  grid-column:1/-1; padding:6px 0 2px;
+  border-top:1px solid var(--border);
+  font-size:11px; font-weight:600; color:var(--text2);
+}
+
+/* ══════════════════════════════════════════════════
+   LESSON ACTIVE PAGE
+══════════════════════════════════════════════════ */
+.lesson-wrap { display:flex; flex-direction:column; flex:1; overflow:hidden; min-height:0; }
+
+/* — Stats bar — */
+.stats-bar {
+  display:flex; flex-shrink:0;
+  background:var(--bg2); border-bottom:1px solid var(--border);
+}
+.stc {
+  flex:1; display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  padding:7px 4px; border-right:1px solid var(--border);
+  min-width:0; /* allow shrink */
+}
+.stc:last-child { border-right:none; }
+.stc-v { font-size:15px; font-weight:700; color:var(--teal); transition:color .2s; }
+.stc-l { font-size:8px; color:var(--text3); text-transform:uppercase; letter-spacing:.4px; margin-top:1px; }
+.stc-v.good { color:var(--green); }
+.stc-v.warn { color:var(--orange); }
+.stc-v.bad  { color:var(--rose); }
+
+/* — Lesson main — */
+.lesson-main { flex:1; display:flex; flex-direction:column; overflow:hidden; min-height:0; }
+
+/* — Lesson header — */
+.lesson-hdr {
+  padding:8px 16px; flex-shrink:0;
+  background:var(--bg2); border-bottom:1px solid var(--border);
+  display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+}
+.lesson-hdr h3 { font-size:14px; font-weight:700; }
+.lhdr-sub { font-size:11px; color:var(--text2); }
+
+/* — Lesson tabs — */
+.lesson-tabs {
+  display:flex; gap:4px; padding:6px 16px 0;
+  overflow-x:auto; flex-shrink:0;
+  -webkit-overflow-scrolling:touch;
+}
+.lesson-tabs::-webkit-scrollbar { height:2px; }
+.lesson-tabs::-webkit-scrollbar-thumb { background:var(--bg4); }
+.ltab {
+  background:var(--bg2); border:1px solid var(--border);
+  border-radius:var(--r); padding:4px 10px;
+  font-size:11px; cursor:pointer; white-space:nowrap;
+  transition:all .12s; flex-shrink:0;
+  touch-action:manipulation;
+}
+.ltab.on  { background:var(--teal2); border-color:var(--teal); color:var(--teal); }
+.ltab.done { border-color:var(--green); color:var(--green); }
+
+/* — Progress bar — */
+.progress-bar { height:3px; background:var(--bg3); flex-shrink:0; }
+#progFill { height:100%; background:var(--teal); transition:width .1s; }
+
+/* — Target text — */
+.target-wrap { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:10px 16px; }
+#targetText {
+  font-size:24px; line-height:1.9; word-break:break-word;
+  overflow-wrap:break-word; letter-spacing:.4px;
+}
+.ch-todo  { color:var(--text3); }
+.ch-cur   { color:var(--text); background:rgba(45,212,191,.22); border-radius:2px; padding:0 1px; }
+.ch-done  { color:var(--green); }
+.ch-wrong { color:var(--rose); background:rgba(251,113,133,.15); border-radius:2px; }
+.ch-space-done  { background:rgba(74,222,128,.2);   border-radius:2px; padding:0 3px; }
+.ch-space-wrong { background:rgba(251,113,133,.2);  border-radius:2px; padding:0 3px; }
+@keyframes blink-c { 0%,100%{opacity:1} 50%{opacity:.5} }
+
+/* — Typing input — */
+.lesson-input-wrap { padding:7px 16px; flex-shrink:0; }
+#typingInput {
+  width:100%; background:var(--bg2);
+  border:1px solid var(--border2); border-radius:var(--r);
+  padding:8px 12px; color:var(--text);
+  font-size:15px; outline:none;
+  font-family:'Inter',sans-serif; resize:none; height:44px;
+}
+#typingInput:focus { border-color:var(--teal); box-shadow:0 0 0 2px rgba(45,212,191,.08); }
+
+/* — Lesson toolbar — */
+.lesson-toolbar {
+  display:flex; align-items:center; gap:8px;
+  padding:4px 16px 6px; flex-shrink:0; flex-wrap:wrap;
+}
+.mode-btns { display:flex; gap:4px; }
+.mode-btn {
+  background:var(--bg2); border:1px solid var(--border);
+  border-radius:var(--r); padding:4px 10px;
+  font-size:11px; cursor:pointer; transition:all .12s;
+  font-family:inherit;
+}
+.mode-btn.on { background:var(--teal2); border-color:var(--teal); color:var(--teal); }
+.hint-toggle {
+  font-size:11px; color:var(--text2);
+  display:flex; align-items:center; gap:4px; cursor:pointer;
+}
+.hint-toggle input { accent-color:var(--teal); }
+.wpm-indicator { display:flex; align-items:center; gap:6px; margin-left:auto; flex-wrap:nowrap; }
+#wpmTargetText { font-size:11px; color:var(--text2); }
+#wpmDot { width:8px; height:8px; border-radius:50%; background:var(--text3); transition:background .3s; flex-shrink:0; }
+#hWpm { font-size:11px; font-weight:700; }
+#hAcc { font-size:11px; color:var(--green); }
+
+/* ══════════════════════════════════════════════════
+   KEYBOARD SECTION (lesson + free)
+══════════════════════════════════════════════════ */
+.kb-section, .free-kb-section {
+  flex-shrink:0; display:flex; flex-direction:column;
+  align-items:center; gap:6px;
+  padding:6px 10px 8px;
+  background:var(--bg2); border-top:1px solid var(--border);
+  overflow-x:auto; -webkit-overflow-scrolling:touch;
+}
+.kb-section::-webkit-scrollbar, .free-kb-section::-webkit-scrollbar { height:2px; }
+
+/* — Hands — */
+.hands-row {
+  display:flex; align-items:flex-end; justify-content:center;
+  width:100%; max-width:820px; gap:12px;
+}
+.hand-svg { width:130px; height:90px; flex-shrink:0; }
+.hf { transition:all .25s cubic-bezier(.34,1.56,.64,1); opacity:.25; }
+.hf.act { opacity:1; filter:drop-shadow(0 0 8px currentColor); }
+.fp  { fill:rgba(167,139,250,.55); color:rgba(167,139,250,1); }
+.fr  { fill:rgba(96,165,250,.55);  color:rgba(96,165,250,1); }
+.fm  { fill:rgba(52,211,153,.55);  color:rgba(52,211,153,1); }
+.fi2 { fill:rgba(251,191,36,.55);  color:rgba(251,191,36,1); }
+.ft  { fill:rgba(249,115,22,.55);  color:rgba(249,115,22,1); }
+.hf.act.fp  { fill:rgba(167,139,250,1); }
+.hf.act.fr  { fill:rgba(96,165,250,1); }
+.hf.act.fm  { fill:rgba(52,211,153,1); }
+.hf.act.fi2 { fill:rgba(251,191,36,1); }
+.hf.act.ft  { fill:rgba(249,115,22,1); }
+
+/* — Keyboard grid — */
+.keyboard {
+  display:flex; flex-direction:column; gap:3px;
+  user-select:none; width:100%; max-width:820px;
+}
+.kb-row { display:flex; gap:3px; justify-content:center; flex-wrap:nowrap; }
+
+/* — Keys — */
+.key {
+  background:var(--bg3); border:1px solid var(--border2);
+  border-radius:5px; padding:0;
+  min-width:var(--kw); height:var(--kh);
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:1px; cursor:pointer; transition:all .12s;
+  position:relative; flex-shrink:0;
+  touch-action:manipulation;
+}
+.key:hover  { background:var(--bg4); border-color:var(--border3); }
+.key:active { background:var(--teal2); border-color:var(--teal); transform:translateY(1px); }
+.key .kc { font-size:var(--kf); line-height:1; }
+.key .kl { font-size:8px; color:var(--text3); line-height:1; }
+.key.home { border-bottom:2px solid var(--teal); }
+.key.wide    { min-width:var(--kwide); }
+.key.wider   { min-width:var(--kwider); }
+.key.widest  { min-width:var(--kwidest); }
+.key.sp      { flex:1; max-width:280px; }
+/* highlight / error states */
+.key.nxt {
+  background:rgba(45,212,191,.17); border-color:var(--teal); color:var(--teal);
+  box-shadow:0 2px 0 rgba(0,0,0,.4), 0 0 12px rgba(45,212,191,.4);
+  animation:kp 1.3s ease-in-out infinite;
+}
+@keyframes kp {
+  0%,100%{ box-shadow:0 2px 0 rgba(0,0,0,.4), 0 0 8px rgba(45,212,191,.3); }
+  50%    { box-shadow:0 2px 0 rgba(0,0,0,.4), 0 0 20px rgba(45,212,191,.7); }
+}
+.key.err       { background:var(--rose)!important; color:#fff!important; transform:scale(1.08); }
+.key.flash-err { background:var(--rose2); border-color:var(--rose); }
+.key.pressed   { background:var(--purple2)!important; border-color:var(--purple)!important; transform:scale(0.93); }
+.key.flash     { background:var(--teal2); border-color:var(--teal); transform:translateY(1px); }
+/* finger colour bars on key tops */
+.key[data-f="lp"]{ border-top:2px solid rgba(167,139,250,.5); }
+.key[data-f="lr"]{ border-top:2px solid rgba(96,165,250,.5); }
+.key[data-f="lm"]{ border-top:2px solid rgba(52,211,153,.5); }
+.key[data-f="li"]{ border-top:2px solid rgba(251,191,36,.5); }
+.key[data-f="lt"]{ border-top:2px solid rgba(249,115,22,.5); }
+.key[data-f="rt"]{ border-top:2px solid rgba(249,115,22,.5); }
+.key[data-f="ri"]{ border-top:2px solid rgba(251,191,36,.5); }
+.key[data-f="rm"]{ border-top:2px solid rgba(52,211,153,.5); }
+.key[data-f="rr"]{ border-top:2px solid rgba(96,165,250,.5); }
+.key[data-f="rp"]{ border-top:2px solid rgba(167,139,250,.5); }
+
+/* ══════════════════════════════════════════════════
+   SCORE PAGE
+══════════════════════════════════════════════════ */
+.score-wrap {
+  display:flex; flex-direction:column; align-items:center;
+  padding:24px 16px; gap:14px; flex:1; overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+}
+.score-ring-wrap { position:relative; width:140px; height:140px; }
+#scoreRing { width:140px; height:140px; border-radius:50%; background:var(--bg3); transition:background 1s; }
+.score-pct {
+  position:absolute; inset:0;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+}
+#scorePct { font-size:28px; font-weight:700; color:var(--teal); }
+.score-stars { font-size:32px; letter-spacing:4px; }
+.score-stats {
+  display:grid; grid-template-columns:repeat(3,1fr);
+  gap:8px; width:100%; max-width:400px;
+}
+.ss-card {
+  background:var(--bg2); border:1px solid var(--border);
+  border-radius:var(--r2); padding:12px; text-align:center;
+}
+.ss-val { font-size:22px; font-weight:700; color:var(--teal); }
+.ss-lbl { font-size:10px; color:var(--text3); text-transform:uppercase; margin-top:2px; }
+.score-btns { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
+
+/* ══════════════════════════════════════════════════
+   ALPHABET PAGE
+══════════════════════════════════════════════════ */
+.alpha-wrap { display:flex; flex-direction:column; flex:1; overflow:hidden; }
+.alpha-hdr  { padding:14px 16px 8px; flex-shrink:0; }
+.alpha-hdr h3 { font-size:16px; font-weight:700; }
+.alpha-grid {
+  display:grid; grid-template-columns:repeat(auto-fill, minmax(52px,1fr));
+  gap:6px; padding:0 16px 16px; overflow-y:auto; flex:1;
+}
+.acard {
+  background:var(--bg2); border:1px solid var(--border);
+  border-radius:var(--r); padding:8px 4px;
+  cursor:pointer; text-align:center; transition:all .12s;
+}
+.acard:hover, .acard.sel { background:var(--teal2); border-color:var(--teal); }
+.acard-ch   { font-size:22px; line-height:1.2; }
+.acard-name { font-size:9px; color:var(--text3); margin-top:2px; }
+.detail-panel {
+  background:var(--bg2); border-top:1px solid var(--border);
+  padding:16px; display:none; flex-shrink:0;
+}
+.detail-panel.open { display:block; }
+.detail-forms { display:flex; gap:12px; flex-wrap:wrap; margin-top:8px; }
+.df-item {
+  background:var(--bg3); border:1px solid var(--border);
+  border-radius:var(--r); padding:8px 12px; text-align:center;
+}
+.df-char  { font-size:26px; }
+.df-label { font-size:9px; color:var(--text3); margin-top:3px; }
+
+/* ══════════════════════════════════════════════════
+   FREE PRACTICE PAGE
+══════════════════════════════════════════════════ */
+.free-wrap { display:flex; flex-direction:column; flex:1; overflow:hidden; }
+.free-disp {
+  flex:1; overflow-y:auto; padding:16px;
+  font-size:22px; line-height:1.8; word-break:break-word;
+  -webkit-overflow-scrolling:touch;
+}
+.free-toolbar {
+  display:flex; gap:8px; padding:7px 16px;
+  border-top:1px solid var(--border); border-bottom:1px solid var(--border);
+  flex-shrink:0; flex-wrap:wrap; align-items:center;
+}
+
+/* ══════════════════════════════════════════════════
+   KEY MAP PAGE
+══════════════════════════════════════════════════ */
+.km-wrap { display:flex; flex-direction:column; flex:1; overflow:hidden; }
+.km-hdr  { padding:14px 16px 8px; flex-shrink:0; }
+.km-hdr h3 { font-size:16px; font-weight:700; }
+.map-grid {
+  display:grid; grid-template-columns:repeat(auto-fill, minmax(56px,1fr));
+  gap:6px; padding:0 16px 16px; overflow-y:auto; flex:1;
+}
+.mcard    { background:var(--bg2); border:1px solid var(--border); border-radius:var(--r); padding:6px; text-align:center; }
+.mcard-ch { font-size:20px; }
+.mcard-key{ font-size:10px; color:var(--text3); margin-top:2px; font-family:monospace; }
+
+/* ══════════════════════════════════════════════════
+   HEATMAP PAGE
+══════════════════════════════════════════════════ */
+.hm-wrap    { display:flex; flex-direction:column; flex:1; overflow:hidden; }
+.hm-hdr     { padding:14px 16px 8px; flex-shrink:0; }
+.hm-hdr h3  { font-size:16px; font-weight:700; }
+.hm-kb      { padding:8px 16px; flex-shrink:0; }
+.hm-summary { padding:8px 16px; overflow-y:auto; flex:1; }
+
+/* ══════════════════════════════════════════════════
+   GUIDE PAGE
+══════════════════════════════════════════════════ */
+.guide-wrap    { display:flex; flex-direction:column; flex:1; overflow-y:auto; }
+.guide-hdr     { padding:14px 16px 8px; flex-shrink:0; }
+.guide-hdr h3  { font-size:16px; font-weight:700; }
+.guide-sub     { font-size:12px; color:var(--text2); margin-top:2px; }
+.guide-content { padding:0 16px 16px; }
+.gcard {
+  background:var(--bg2); border:1px solid var(--border);
+  border-radius:var(--r2); padding:14px; margin-bottom:8px;
+  display:flex; gap:12px; align-items:flex-start;
+}
+.gcard-ico { font-size:22px; flex-shrink:0; }
+.gcard h4  { font-size:13px; font-weight:700; margin-bottom:4px; }
+.gcard p, .gcard li { font-size:12px; color:var(--text2); line-height:1.6; }
+.gcard ul  { padding-left:16px; }
+
+/* ══════════════════════════════════════════════════
+   STATS PAGE
+══════════════════════════════════════════════════ */
+.stats-wrap { display:flex; flex-direction:column; flex:1; overflow:hidden; }
+.stats-hdr  { padding:14px 16px 8px; flex-shrink:0; }
+.stats-hdr h3 { font-size:16px; font-weight:700; }
+.stats-lang-tabs {
+  display:flex; gap:4px; padding:0 16px 8px;
+  flex-shrink:0; overflow-x:auto; -webkit-overflow-scrolling:touch;
+}
+.slt {
+  background:var(--bg2); border:1px solid var(--border);
+  border-radius:var(--r); padding:5px 12px;
+  font-size:12px; cursor:pointer; transition:all .12s; white-space:nowrap;
+  font-family:inherit;
+}
+.slt.on { background:var(--teal2); border-color:var(--teal); color:var(--teal); }
+.stats-body { flex:1; overflow-y:auto; padding:0 16px 16px; -webkit-overflow-scrolling:touch; }
+.stat-section { margin-bottom:16px; }
+.stat-section h4 { font-size:13px; font-weight:700; margin-bottom:8px; color:var(--text2); }
+.sess-item {
+  background:var(--bg2); border:1px solid var(--border); border-radius:var(--r);
+  padding:8px 12px; margin-bottom:6px;
+  display:flex; justify-content:space-between; align-items:center;
+}
+.sess-meta { font-size:11px; color:var(--text3); }
+.sess-val  { font-size:13px; font-weight:700; color:var(--teal); }
+.wpm-bar-wrap { display:flex; gap:3px; align-items:flex-end; height:80px; padding:8px 0; }
+.wpm-bar      { flex:1; background:var(--teal); border-radius:3px 3px 0 0; min-height:3px; transition:height .3s; cursor:pointer; }
+.wpm-bar:hover{ background:var(--blue); }
+
+/* ══════════════════════════════════════════════════
+   SIDEBAR (slide-in drawer)
+══════════════════════════════════════════════════ */
+.sidebar {
+  position:fixed; top:0; left:-270px; width:270px; height:100%;
+  background:var(--bg2); border-right:1px solid var(--border);
+  z-index:200; transition:left .25s ease;
+  display:flex; flex-direction:column; overflow-y:auto;
+}
+.sidebar.open { left:0; }
+.sidebar-overlay {
+  position:fixed; inset:0;
+  background:rgba(0,0,0,.55); z-index:199;
+  display:none; opacity:0; transition:opacity .25s;
+}
+.sidebar-overlay.open { display:block; opacity:1; }
+.sb-hdr { padding:16px; border-bottom:1px solid var(--border); }
+.sb-hdr h3 { font-size:15px; font-weight:700; }
+.sb-row, .sb-r {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:10px 16px; border-bottom:1px solid var(--border);
+}
+.sb-l { font-size:11px; color:var(--text3); }
+.sb-v { font-size:13px; font-weight:600; color:var(--text); }
+.sb-prog { padding:10px 16px; border-bottom:1px solid var(--border); }
+.sb-prog-bar { height:6px; background:var(--bg3); border-radius:3px; margin-top:6px; overflow:hidden; }
+#sb-prog-fill { height:100%; background:linear-gradient(90deg,var(--teal),var(--blue)); transition:width .5s; }
+
+/* ══════════════════════════════════════════════════
+   SETTINGS MODAL
+══════════════════════════════════════════════════ */
+.settings-overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:300;
+  display:none; align-items:center; justify-content:center;
+}
+.settings-overlay.open { display:flex; }
+.settings-modal {
+  background:var(--bg2); border:1px solid var(--border2);
+  border-radius:var(--r3); width:min(380px,92vw);
+  max-height:85vh; overflow-y:auto; padding:20px;
+}
+.settings-modal h3 { font-size:16px; font-weight:700; margin-bottom:16px; }
+.setting-row {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:10px 0; border-bottom:1px solid var(--border);
+}
+.setting-row:last-child { border-bottom:none; }
+.setting-row label { font-size:13px; font-weight:600; }
+.setting-row p     { font-size:11px; color:var(--text2); margin-top:2px; }
+.toggle { position:relative; width:40px; height:22px; flex-shrink:0; }
+.toggle input { opacity:0; width:0; height:0; }
+.toggle-sl {
+  position:absolute; inset:0; background:var(--bg4);
+  border-radius:11px; cursor:pointer; transition:.2s;
+}
+.toggle-sl::before {
+  content:""; position:absolute;
+  height:16px; width:16px; left:3px; bottom:3px;
+  background:#fff; border-radius:50%; transition:.2s;
+}
+.toggle input:checked + .toggle-sl { background:var(--teal); }
+.toggle input:checked + .toggle-sl::before { transform:translateX(18px); }
+select.setting-sel {
+  background:var(--bg3); border:1px solid var(--border2);
+  border-radius:var(--r); color:var(--text); padding:4px 8px; font-size:12px;
+}
+
+/* ══════════════════════════════════════════════════
+   BOTTOM NAVIGATION
+══════════════════════════════════════════════════ */
+.nav {
+  flex-shrink:0; display:flex;
+  background:var(--bg2); border-top:1px solid var(--border);
+  overflow-x:auto; -webkit-overflow-scrolling:touch;
+}
+.nav::-webkit-scrollbar { display:none; }
+.nv {
+  flex:1; min-width:44px;
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  padding:6px 2px; cursor:pointer; transition:all .15s;
+  border-top:2px solid transparent;
+  font-size:9px; color:var(--text3); gap:2px; white-space:nowrap;
+  touch-action:manipulation;
+}
+.nv:hover  { color:var(--text2); background:var(--bg3); }
+.nv.active { color:var(--teal); border-top-color:var(--teal); }
+.nv-ico { font-size:18px; line-height:1; }
+.nv-lbl { font-size:9px; }
+.nv-bdg {
+  background:var(--rose); color:#fff;
+  font-size:8px; font-weight:700;
+  padding:1px 4px; border-radius:6px;
+  position:absolute; top:4px; right:2px;
+}
+
+/* ══════════════════════════════════════════════════
+   TOAST
+══════════════════════════════════════════════════ */
+.toast {
+  position:fixed; bottom:calc(var(--nav,56px) + 12px); left:50%; transform:translateX(-50%);
+  background:var(--bg4); border:1px solid var(--border2);
+  border-radius:var(--r); padding:8px 16px;
+  font-size:13px; font-weight:600; z-index:500;
+  opacity:0; transition:opacity .2s; pointer-events:none;
+  white-space:nowrap;
+}
+.toast.show { opacity:1; }
+
+/* ══════════════════════════════════════════════════
+   RESPONSIVE — INSANE LEVEL
+   Strategy:
+   • CSS custom properties for all key sizes → one change ripples everywhere
+   • Each breakpoint only changes what actually differs
+   • Keyboard always scrolls horizontally — never overflows the page
+   • Stats bar switches to 3-col wrap on phones
+   • Nav labels hidden ≤ 480px → icon-only compact nav
+   • Hands scale down smoothly
+   • Target text font scales with viewport
+   • All overflow-y:auto sections get -webkit-overflow-scrolling:touch
+══════════════════════════════════════════════════ */
+
+/* ── 1024px — tight desktop/large tablet ── */
+@media(max-width:1024px){
+  :root{ --kw:33px; --kh:36px; --kf:13px; --kwide:50px; --kwider:64px; --kwidest:80px; }
+}
+
+/* ── 860px — medium tablet ── */
+@media(max-width:860px){
+  :root{ --kw:30px; --kh:34px; --kf:12px; --kwide:46px; --kwider:58px; --kwidest:72px; }
+  .hand-svg{ width:115px; height:80px; }
+}
+
+/* ── 768px — tablet / large phone landscape ── */
+@media(max-width:768px){
+  :root{ --hdr:46px; --lbar:38px; --kw:27px; --kh:32px; --kf:11px; --kwide:42px; --kwider:54px; --kwidest:66px; }
+  .hand-svg{ width:105px; height:73px; }
+  #targetText{ font-size:22px; }
+  .stats-bar{ flex-wrap:nowrap; }          /* keep 6 in a row at tablet */
+  .stc-v{ font-size:13px; }
+  .stc-l{ font-size:7.5px; }
+  .lesson-hdr{ padding:6px 12px; }
+  .lessons-grid{ grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:6px; padding:0 12px 12px; }
+}
+
+/* ── 640px — large phone portrait ── */
+@media(max-width:640px){
+  :root{ --hdr:44px; --lbar:36px; --kw:24px; --kh:30px; --kf:10.5px; --kwide:37px; --kwider:48px; --kwidest:60px; }
+  .hand-svg{ width:95px; height:66px; }
+  #targetText{ font-size:19px; line-height:1.8; }
+  /* Stats bar: 3 cols × 2 rows */
+  .stats-bar{ flex-wrap:wrap; }
+  .stc{ width:33.333%; flex:none; border-bottom:1px solid var(--border); }
+  .stc:nth-child(3){ border-right:none; }
+  .stc:nth-child(4),.stc:nth-child(5),.stc:nth-child(6){ border-bottom:none; }
+  .stc:nth-child(6){ border-right:none; }
+  .stc-v{ font-size:13px; }
+  .stc-l{ font-size:7px; }
+  .lesson-hdr{ padding:5px 10px; flex-wrap:wrap; gap:5px; }
+  .wpm-indicator{ margin-left:0; width:100%; }
+  .lesson-input-wrap{ padding:5px 12px; }
+  #typingInput{ height:42px; font-size:14px; }
+  .lessons-grid{ grid-template-columns:repeat(auto-fill,minmax(105px,1fr)); gap:5px; padding:0 10px 10px; }
+  .kb-section, .free-kb-section{ padding:4px 6px 6px; gap:4px; }
+  .free-disp{ font-size:20px; }
+  /* Nav: still show labels */
+  .nv{ padding:5px 1px; font-size:8.5px; }
+  .nv-ico{ font-size:16px; }
+}
+
+/* ── 480px — small phone ── */
+@media(max-width:480px){
+  :root{ --hdr:42px; --lbar:34px; --kw:21px; --kh:28px; --kf:9.5px; --kwide:33px; --kwider:43px; --kwidest:54px; }
+  .hand-svg{ width:82px; height:57px; }
+  #targetText{ font-size:17px; line-height:1.75; }
+  .stc-v{ font-size:12px; }
+  .stc-l{ font-size:6.5px; }
+  .stc{ padding:5px 2px; }
+  /* Nav: ICON ONLY — save precious bottom space */
+  .nv-lbl{ display:none; }
+  .nv{ flex-direction:row; padding:8px 0; min-width:0; gap:0; justify-content:center; }
+  .nv-ico{ font-size:20px; }
+  /* Header slim */
+  .hdr{ padding:0 10px; gap:8px; }
+  .hdr-logo{ font-size:18px; }
+  .hdr-name{ font-size:12px; }
+  /* Lang bar */
+  .lb-cnt{ display:none; }
+  .lb-name{ font-size:11px; }
+  /* Lesson */
+  .lesson-hdr h3{ font-size:12px; }
+  .lhdr-sub{ font-size:10px; }
+  .lesson-toolbar{ padding:3px 10px 5px; gap:5px; }
+  .lesson-input-wrap{ padding:4px 10px; }
+  #typingInput{ height:40px; font-size:14px; padding:6px 10px; }
+  /* Target */
+  .target-wrap{ padding:6px 10px; }
+  /* Lessons grid */
+  .lessons-grid{ grid-template-columns:repeat(auto-fill,minmax(90px,1fr)); gap:4px; padding:0 8px 8px; }
+  /* Keyboard section */
+  .kb-section, .free-kb-section{ padding:3px 4px 5px; gap:3px; }
+  /* Score */
+  .score-ring-wrap{ width:110px; height:110px; }
+  #scoreRing{ width:110px; height:110px; }
+  #scorePct{ font-size:22px; }
+  .score-stars{ font-size:26px; }
+  .ss-val{ font-size:18px; }
+}
+
+/* ── 380px — very small phone ── */
+@media(max-width:380px){
+  :root{ --hdr:40px; --lbar:32px; --kw:18px; --kh:26px; --kf:9px; --kwide:28px; --kwider:37px; --kwidest:46px; }
+  .hand-svg{ width:70px; height:49px; }
+  #targetText{ font-size:15px; }
+  .stc-v{ font-size:11px; }
+  .stc-l{ font-size:6px; }
+  .lessons-grid{ grid-template-columns:repeat(auto-fill,minmax(80px,1fr)); }
+  .nv-ico{ font-size:18px; }
+}
+
+/* ── Landscape + short viewport (phones on their side) ── */
+@media(orientation:landscape) and (max-height:520px){
+  :root{ --hdr:38px; --lbar:30px; --kh:24px; }
+  .hands-row{ display:none; }           /* hide hands — save vertical space */
+  .kb-section, .free-kb-section{ padding:2px 6px 3px; gap:2px; }
+  .stc{ padding:3px 2px; }
+  .stc-v{ font-size:11px; }
+  .stc-l{ font-size:6px; }
+  .lesson-input-wrap{ padding:3px 10px; }
+  #typingInput{ height:34px; }
+  .target-wrap{ max-height:70px; overflow-y:auto; }
+  .lesson-hdr{ padding:3px 10px; }
+  .lesson-toolbar{ padding:2px 10px 3px; }
+  /* keep font-size from 480 if we're also narrow */
+}
+
+/* ── Keyboard always scrollable — never causes page overflow ── */
+@media(max-width:900px){
+  .kb-section, .free-kb-section{
+    align-items:flex-start;   /* left-align so horizontal scroll works */
+  }
+  .keyboard{ min-width:max-content; }  /* don't let rows wrap */
+}
+
+/* ── Phase separator (lesson grid) ── */
+.phase-sep { display:flex; align-items:center; gap:8px; padding:6px 0 2px; grid-column:1/-1; }
+.phase-sep-line { flex:1; height:1px; background:var(--border); }
+.phase-sep-label { font-size:11px; font-weight:600; color:var(--text2); white-space:nowrap; }
+
+/* ── JS active-state aliases (.on added by goPage / navTo) ── */
+.page.on    { display:flex !important; }
+.nv.on      { color:var(--teal); border-top-color:var(--teal); }
+.nv.on .nv-ico { color:var(--teal); }
+
+</style>
+</head>
+<body>
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+  <div class="sb-hdr"><h3>📊 Progress</h3></div>
+  <div class="sb-row"><span class="sb-l">Language</span><span class="sb-v" id="sb-lang">English</span></div>
+  <div class="sb-r"><span class="sb-l">Sessions</span><span class="sb-v" id="sb-sess">0</span></div>
+  <div class="sb-r"><span class="sb-l">Best WPM</span><span class="sb-v" id="sb-best">0</span></div>
+  <div class="sb-r"><span class="sb-l">Completed</span><span class="sb-v" id="sb-done">0/100</span></div>
+  <div class="sb-prog">
+    <div style="display:flex;justify-content:space-between;">
+      <span class="sb-l">Overall</span><span class="sb-v" id="sb-pct">0%</span>
+    </div>
+    <div class="sb-prog-bar"><div id="sb-prog-fill" style="width:0%"></div></div>
+  </div>
+  <div class="sb-r"><span class="sb-l">🔥 Day streak</span><span class="sb-v" id="streakCount">0</span></div>
+</div>
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<!-- SETTINGS OVERLAY -->
+<div class="settings-overlay" id="settingsOverlay">
+  <div class="settings-modal">
+    <h3>⚙️ Settings</h3>
+    <div class="setting-row">
+      <div><label>Sound effects</label><p>Key clicks and feedback sounds</p></div>
+      <label class="toggle"><input type="checkbox" id="settSound" onchange="setSetting('sound',this.checked)"><span class="toggle-sl"></span></label>
+    </div>
+    <div class="setting-row">
+      <div><label>Finger guide</label><p>Show hand diagram above keyboard</p></div>
+      <label class="toggle"><input type="checkbox" id="settFingers" onchange="setSetting('fingers',this.checked)"><span class="toggle-sl"></span></label>
+    </div>
+    <div class="setting-row">
+      <div><label>Shake on error</label><p>Visual shake feedback on wrong key</p></div>
+      <label class="toggle"><input type="checkbox" id="settShake" onchange="setSetting('shake',this.checked)"><span class="toggle-sl"></span></label>
+    </div>
+    <div class="setting-row">
+      <div><label>Font size</label><p>Target text display size</p></div>
+      <select class="setting-sel" id="fontSizeSelect" onchange="setFontSize(this.value)">
+        <option value="small">Small</option>
+        <option value="medium" selected>Medium</option>
+        <option value="large">Large</option>
+      </select>
+    </div>
+    <div class="setting-row">
+      <div><label>WPM target</label><p>Your speed goal</p></div>
+      <select class="setting-sel" id="wpmTargetSelect" onchange="setWpmTarget(+this.value)">
+        <option value="15">15 WPM</option>
+        <option value="20">20 WPM</option>
+        <option value="30" selected>30 WPM</option>
+        <option value="40">40 WPM</option>
+        <option value="50">50 WPM</option>
+        <option value="60">60 WPM</option>
+        <option value="80">80 WPM</option>
+        <option value="100">100 WPM</option>
+      </select>
+    </div>
+    <div style="margin-top:16px;text-align:right;">
+      <button class="btn primary" onclick="closeSettings()">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header class="hdr">
+  <button onclick="openSidebar()" aria-label="Open progress sidebar" style="cursor:pointer;font-size:20px;line-height:1;background:none;border:none;color:inherit;padding:4px;">☰</button>
+  <div class="hdr-logo" style="margin-left:8px;">TM</div>
+  <div class="hdr-name">TypeMaster</div>
+  <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
+    <div class="streak-chip">🔥 <span id="fcount">0</span></div>
+    <button class="btn" onclick="openSettings()" aria-label="Open settings" style="padding:5px 10px;font-size:12px;">⚙️</button>
+  </div>
+</header>
+
+<!-- LANG BAR -->
+<div class="lbar">
+  <div class="lb active" data-lang="en" onclick="switchLang('en')">
+    <span class="lb-name">English</span><span class="lb-cnt">100L</span>
+  </div>
+  <div class="lb" data-lang="ar" onclick="switchLang('ar')">
+    <span class="lb-name">العربية</span><span class="lb-cnt">100L</span>
+  </div>
+  <div class="lb" data-lang="ur" onclick="switchLang('ur')">
+    <span class="lb-name">اردو</span><span class="lb-cnt">100L</span>
+  </div>
+  <div class="lb" data-lang="bn" onclick="switchLang('bn')">
+    <span class="lb-name">বাংলা</span><span class="lb-cnt">100L</span>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+
+  <!-- LESSONS PAGE -->
+  <div class="page" id="page-lessons">
+    <div class="lessons-hdr">
+      <h2 id="lessons-title">English Lessons</h2>
+      <div class="lessons-sub" id="lessons-sub">100 lessons across 7 phases — easiest to hardest. All lessons unlocked!</div>
+    </div>
+    <div class="lessons-grid" id="lessonGrid"></div>
+  </div>
+
+  <!-- LESSON ACTIVE PAGE -->
+  <div class="page" id="page-lesson">
+    <div class="lesson-wrap">
+      <div class="stats-bar">
+        <div class="stc"><div class="stc-v" id="stSigns">0</div><div class="stc-l">Signs</div></div>
+        <div class="stc"><div class="stc-v" id="stProg">0%</div><div class="stc-l">Progress</div></div>
+        <div class="stc"><div class="stc-v" id="stWpm">0</div><div class="stc-l">WPM</div></div>
+        <div class="stc"><div class="stc-v" id="stErr" style="color:var(--rose)">0</div><div class="stc-l">Errors</div></div>
+        <div class="stc"><div class="stc-v" id="stAcc" style="color:var(--green)">100%</div><div class="stc-l">Accuracy</div></div>
+        <div class="stc"><div class="stc-v" id="stTime" style="color:var(--gold)">00:00</div><div class="stc-l">Time</div></div>
+      </div>
+      <div class="lesson-main">
+        <div class="lesson-hdr">
+          <h3 id="lhdr-title">Lesson</h3>
+          <div class="lhdr-sub" id="lhdr-sub"></div>
+          <div id="lhdr-phase" style="font-size:10px;color:var(--text3);margin-top:2px;"></div>
+        </div>
+        <div class="lesson-tabs" id="lessonTabs"></div>
+        <div class="progress-bar"><div id="progFill" style="width:0%"></div></div>
+        <div class="target-wrap" id="targetWrap">
+          <div id="targetText"></div>
+        </div>
+        <div class="lesson-input-wrap">
+          <textarea id="typingInput" placeholder="Start typing here…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
+        </div>
+        <div class="lesson-toolbar">
+          <div class="mode-btns">
+            <button class="mode-btn on" id="modeP" onclick="setMode('practice')" title="Practice mode — keyboard hints visible">Practice</button>
+            <button class="mode-btn" id="modeT" onclick="setMode('test')" title="Test mode — no keyboard hints, pure typing">Test</button>
+          </div>
+          <label class="hint-toggle"><input type="checkbox" id="hintToggle" checked onchange="toggleHints()"> Hints</label>
+          <div class="wpm-indicator">
+            <span id="wpmTargetText">Target: 30</span>
+            <div id="wpmDot"></div>
+            <span id="hWpm">0 WPM</span><span id="hAcc" style="font-size:11px;color:var(--green);margin-left:8px;"></span>
+          </div>
+        </div>
+        <div class="kb-section">
+          <div class="hands-row" id="handsRow">
+            <svg class="hand-svg" viewBox="0 0 130 90" xmlns="http://www.w3.org/2000/svg">
+              <rect id="fl-lp" class="hf fp" x="4"  y="35" width="20" height="55" rx="10"/>
+              <rect id="fl-lr" class="hf fr" x="28" y="25" width="20" height="65" rx="10"/>
+              <rect id="fl-lm" class="hf fm" x="52" y="18" width="20" height="72" rx="10"/>
+              <rect id="fl-li" class="hf fi2" x="76" y="22" width="20" height="68" rx="10"/>
+              <rect id="fl-lt" class="hf ft" x="100" y="52" width="26" height="18" rx="9" transform="rotate(-35,113,61)"/>
+            </svg>
+            <div style="flex:1;min-width:8px;"></div>
+            <svg class="hand-svg" viewBox="0 0 130 90" xmlns="http://www.w3.org/2000/svg">
+              <rect id="fl-rt" class="hf ft" x="4"  y="52" width="26" height="18" rx="9" transform="rotate(35,17,61)"/>
+              <rect id="fl-ri" class="hf fi2" x="34" y="22" width="20" height="68" rx="10"/>
+              <rect id="fl-rm" class="hf fm" x="58" y="18" width="20" height="72" rx="10"/>
+              <rect id="fl-rr" class="hf fr" x="82" y="25" width="20" height="65" rx="10"/>
+              <rect id="fl-rp" class="hf fp" x="106" y="35" width="20" height="55" rx="10"/>
+            </svg>
+          </div>
+          <div class="keyboard" id="kbLesson"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCORE PAGE -->
+  <div class="page" id="page-score">
+    <div class="score-wrap">
+      <div>
+        <h2 id="scoreTitle" style="font-size:20px;font-weight:700;text-align:center;"></h2>
+        <div id="scoreSub" style="font-size:12px;color:var(--text2);text-align:center;margin-top:4px;"></div>
+      </div>
+      <div class="score-ring-wrap">
+        <svg id="scoreRing" viewBox="0 0 140 140" width="140" height="140" style="transform:rotate(-90deg)">
+          <circle cx="70" cy="70" r="58" fill="none" stroke="var(--bg3)" stroke-width="12"/>
+          <circle id="scoreArc" cx="70" cy="70" r="58" fill="none" stroke="var(--teal)" stroke-width="12"
+            stroke-dasharray="364.4" stroke-dashoffset="364.4" stroke-linecap="round"
+            style="transition:stroke-dashoffset 1s ease,stroke .4s"/>
+        </svg>
+        <div class="score-pct">
+          <div id="scorePct">0%</div>
+          <div style="font-size:10px;color:var(--text3);">accuracy</div>
+        </div>
+      </div>
+      <div class="score-stars" id="scoreStars">☆☆☆</div>
+      <div id="scoreBest" style="font-size:11px;color:var(--teal);text-align:center;"></div>
+      <div class="score-stats">
+        <div class="ss-card"><div class="ss-val" id="scWpm">0</div><div class="ss-lbl">WPM</div></div>
+        <div class="ss-card"><div class="ss-val" id="scCorrect">0</div><div class="ss-lbl">Correct</div></div>
+        <div class="ss-card"><div class="ss-val" id="scErrors">0</div><div class="ss-lbl">Errors</div></div>
+      </div>
+      <div id="scoreMsg" style="font-size:13px;color:var(--text2);text-align:center;"></div>
+      <div id="scoreUnlock" style="font-size:12px;color:var(--orange);text-align:center;"></div>
+      <div class="score-btns">
+        <button class="btn" onclick="startLesson(curLesson)">↩ Retry</button>
+        <button class="btn primary" onclick="nextLesson()">Next →</button>
+        <button class="btn" onclick="goPage('lessons')">📋 Lessons</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ALPHABET PAGE -->
+  <div class="page" id="page-alphabet">
+    <div class="alpha-wrap">
+      <div class="alpha-hdr">
+        <h3 id="alpha-title">Arabic Alphabet</h3>
+      </div>
+      <div class="alpha-grid" id="alphaGrid"></div>
+      <div class="detail-panel" id="detailPanel">
+        <div id="detailContent"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FREE PRACTICE PAGE -->
+  <div class="page" id="page-free">
+    <div class="free-wrap">
+      <div class="free-disp" id="freeDisp"></div>
+      <div class="free-toolbar">
+        <button class="btn" onclick="clearFree()">🗑 Clear</button>
+        <button class="btn" onclick="downloadFree()">⬇ Download</button>
+        <span style="font-size:11px;color:var(--text3);margin-left:auto;" id="hLang"></span>
+      </div>
+      <div class="free-kb-section">
+        <div class="hands-row" id="handsRowFree">
+          <svg class="hand-svg" viewBox="0 0 130 90" xmlns="http://www.w3.org/2000/svg">
+            <rect id="ffl-lp" class="hf fp" x="4"  y="35" width="20" height="55" rx="10"/>
+            <rect id="ffl-lr" class="hf fr" x="28" y="25" width="20" height="65" rx="10"/>
+            <rect id="ffl-lm" class="hf fm" x="52" y="18" width="20" height="72" rx="10"/>
+            <rect id="ffl-li" class="hf fi2" x="76" y="22" width="20" height="68" rx="10"/>
+            <rect id="ffl-lt" class="hf ft" x="100" y="52" width="26" height="18" rx="9" transform="rotate(-35,113,61)"/>
+          </svg>
+          <div style="flex:1;min-width:8px;"></div>
+          <svg class="hand-svg" viewBox="0 0 130 90" xmlns="http://www.w3.org/2000/svg">
+            <rect id="ffl-rt" class="hf ft" x="4"  y="52" width="26" height="18" rx="9" transform="rotate(35,17,61)"/>
+            <rect id="ffl-ri" class="hf fi2" x="34" y="22" width="20" height="68" rx="10"/>
+            <rect id="ffl-rm" class="hf fm" x="58" y="18" width="20" height="72" rx="10"/>
+            <rect id="ffl-rr" class="hf fr" x="82" y="25" width="20" height="65" rx="10"/>
+            <rect id="ffl-rp" class="hf fp" x="106" y="35" width="20" height="55" rx="10"/>
+          </svg>
+        </div>
+        <div class="keyboard" id="kbFree"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- KEY MAP PAGE -->
+  <div class="page" id="page-keymap">
+    <div class="km-wrap">
+      <div class="km-hdr"><h3 id="km-title">Key Map</h3></div>
+      <div class="map-grid" id="mapGrid"></div>
+    </div>
+  </div>
+
+  <!-- HEATMAP PAGE -->
+  <div class="page" id="page-heatmap">
+    <div class="hm-wrap">
+      <div class="hm-hdr"><h3>Error Heatmap</h3></div>
+      <div class="hm-kb"><div class="keyboard" id="kbHeatmap"></div></div>
+      <div class="hm-summary" id="heatSummary"></div>
+    </div>
+  </div>
+
+  <!-- GUIDE PAGE -->
+  <div class="page" id="page-guide">
+    <div class="guide-wrap">
+      <div class="guide-hdr">
+        <h3>Learning Guide</h3>
+        <div class="guide-sub" id="guide-sub"></div>
+      </div>
+      <div class="guide-content" id="guideContent"></div>
+      <div style="padding:0 16px 16px;">
+        <div class="gcard" style="opacity:.75;">
+          <div class="gcard-ico">⌨️</div>
+          <div><h4 style="margin:0 0 4px">Keyboard shortcuts</h4>
+          <p style="margin:0;font-size:13px;color:var(--text2)"><b>Esc</b> — close modals &nbsp;·&nbsp; <b>Enter</b> — retry lesson &nbsp;·&nbsp; <b>Space</b> — continue after results</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATS PAGE -->
+  <div class="page" id="page-stats">
+    <div class="stats-wrap">
+      <div class="stats-hdr"><h3>📈 Statistics</h3></div>
+      <div class="stats-lang-tabs" id="statsLangTabs">
+        <button class="slt on" onclick="showStatsLang('en')">English</button>
+        <button class="slt" onclick="showStatsLang('ar')">العربية</button>
+        <button class="slt" onclick="showStatsLang('ur')">اردو</button>
+        <button class="slt" onclick="showStatsLang('bn')">বাংলা</button>
+      </div>
+      <div class="stats-body">
+        <div class="stat-section">
+          <h4>WPM History</h4>
+          <div class="wpm-bar-wrap" id="wpmHistory"></div>
+        </div>
+        <div id="statsGrid"></div>
+        <div class="stat-section" style="margin-top:8px;">
+          <h4>Session Log</h4>
+          <div id="histList"></div>
+        </div>
+        <button class="btn" onclick="exportStats()" style="width:100%;margin-top:8px;">⬇ Export Stats JSON</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end main content -->
+
+<!-- BOTTOM NAV -->
+<nav class="nav" role="navigation" aria-label="Main navigation">
+  <div class="nv" data-page="lessons" onclick="navTo('lessons')">
+    <span class="nv-ico">📚</span>
+    <span>Lessons</span>
+    <span class="nv-bdg" id="nb-lessons">100</span>
+  </div>
+  <div class="nv" data-page="alphabet" onclick="navTo('alphabet')"><span class="nv-ico">🔤</span><span>Alphabet</span></div>
+  <div class="nv" data-page="free" onclick="navTo('free')"><span class="nv-ico">✍️</span><span>Free</span></div>
+  <div class="nv" data-page="keymap" onclick="navTo('keymap')"><span class="nv-ico">🗺️</span><span>Key Map</span></div>
+  <div class="nv" data-page="heatmap" onclick="navTo('heatmap')"><span class="nv-ico">🔥</span><span>Heatmap</span></div>
+  <div class="nv" data-page="guide" onclick="navTo('guide')"><span class="nv-ico">📖</span><span>Guide</span></div>
+  <div class="nv" data-page="stats" onclick="navTo('stats')"><span class="nv-ico">📊</span><span>Stats</span></div>
+</nav>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ── Safe localStorage helpers (no-op in private browsing) ── */
+function lsGet(k,d=''){try{const v=localStorage.getItem(k);return v!==null?v:d;}catch(e){return d;}}
+function lsSet(k,v){try{localStorage.setItem(k,v);}catch(e){}}
+function lsRem(k){try{localStorage.removeItem(k);}catch(e){}}
+
+
+
+/* ═══════════════════════════════════════════════════
+   KEYBOARD LAYOUTS
+═══════════════════════════════════════════════════ */
+const LAYOUTS={
+  en:{rows:[
+    [{c:'`',l:'`',f:'lp'},{c:'1',l:'1',f:'lp'},{c:'2',l:'2',f:'lr'},{c:'3',l:'3',f:'lm'},{c:'4',l:'4',f:'li'},{c:'5',l:'5',f:'li'},{c:'6',l:'6',f:'ri'},{c:'7',l:'7',f:'ri'},{c:'8',l:'8',f:'rm'},{c:'9',l:'9',f:'rr'},{c:'0',l:'0',f:'rp'},{c:'-',l:'-',f:'rp'},{c:'=',l:'=',f:'rp'},{lbl:'⌫',l:'BS',cls:'bs'}],
+    [{lbl:'Tab',l:'TAB',cls:'wide'},{c:'q',l:'q',f:'lp'},{c:'w',l:'w',f:'lr'},{c:'e',l:'e',f:'lm'},{c:'r',l:'r',f:'li'},{c:'t',l:'t',f:'li'},{c:'y',l:'y',f:'ri'},{c:'u',l:'u',f:'ri'},{c:'i',l:'i',f:'rm'},{c:'o',l:'o',f:'rr'},{c:'p',l:'p',f:'rp'},{c:'[',l:'[',f:'rp'},{c:']',l:']',f:'rp'},{c:'\\',l:'\\',f:'rp'}],
+    [{lbl:'Caps',l:'CAPS',cls:'wide wider'},{c:'a',l:'a',f:'lp',home:1},{c:'s',l:'s',f:'lr',home:1},{c:'d',l:'d',f:'lm',home:1},{c:'f',l:'f',f:'li',home:1},{c:'g',l:'g',f:'li'},{c:'h',l:'h',f:'ri'},{c:'j',l:'j',f:'ri',home:1},{c:'k',l:'k',f:'rm',home:1},{c:'l',l:'l',f:'rr',home:1},{c:';',l:';',f:'rp',home:1},{c:"'",l:"'",f:'rp'},{lbl:'↵',l:'ENTER',cls:'en'}],
+    [{lbl:'⇧',l:'SHIFT',cls:'wide wider'},{c:'z',l:'z',f:'lp'},{c:'x',l:'x',f:'lr'},{c:'c',l:'c',f:'lm'},{c:'v',l:'v',f:'li'},{c:'b',l:'b',f:'li'},{c:'n',l:'n',f:'ri'},{c:'m',l:'m',f:'ri'},{c:',',l:',',f:'rm'},{c:'.',l:'.',f:'rr'},{c:'/',l:'/',f:'rp'},{lbl:'⇧',l:'SHIFT2',cls:'wide wider'}],
+    [{lbl:'Ctrl',l:'CTRL',cls:'wide'},{lbl:'Alt',l:'ALT',cls:'wide'},{lbl:'Space',l:'SPACE',cls:'sp'},{lbl:'Alt',l:'ALT2',cls:'wide'},{lbl:'Ctrl',l:'CTRL2',cls:'wide'}],
+  ],isRTL:false},
+  ar:{rows:[
+    [{c:'ذ',l:'`',f:'lp'},{c:'١',l:'1',f:'lp'},{c:'٢',l:'2',f:'lr'},{c:'٣',l:'3',f:'lm'},{c:'٤',l:'4',f:'li'},{c:'٥',l:'5',f:'li'},{c:'٦',l:'6',f:'ri'},{c:'٧',l:'7',f:'ri'},{c:'٨',l:'8',f:'rm'},{c:'٩',l:'9',f:'rr'},{c:'٠',l:'0',f:'rp'},{c:'-',l:'-',f:'rp'},{c:'=',l:'=',f:'rp'},{lbl:'⌫',l:'BS',cls:'bs'}],
+    [{lbl:'Tab',l:'TAB',cls:'wide'},{c:'ض',l:'q',f:'lp'},{c:'ص',l:'w',f:'lr'},{c:'ث',l:'e',f:'lm'},{c:'ق',l:'r',f:'li'},{c:'ف',l:'t',f:'li'},{c:'غ',l:'y',f:'ri'},{c:'ع',l:'u',f:'ri'},{c:'ه',l:'i',f:'rm'},{c:'خ',l:'o',f:'rr'},{c:'ح',l:'p',f:'rp'},{c:'ج',l:'[',f:'rp'},{c:'د',l:']',f:'rp'},{c:'\\',l:'\\',f:'rp'}],
+    [{lbl:'Caps',l:'CAPS',cls:'wide wider'},{c:'ش',l:'a',f:'lp',home:1},{c:'س',l:'s',f:'lr',home:1},{c:'ي',l:'d',f:'lm',home:1},{c:'ب',l:'f',f:'li',home:1},{c:'ل',l:'g',f:'li'},{c:'ا',l:'h',f:'ri'},{c:'ت',l:'j',f:'ri',home:1},{c:'ن',l:'k',f:'rm',home:1},{c:'م',l:'l',f:'rr',home:1},{c:'ك',l:';',f:'rp',home:1},{c:'ط',l:"'",f:'rp'},{lbl:'↵',l:'ENTER',cls:'en'}],
+    [{lbl:'⇧',l:'SHIFT',cls:'wide wider'},{c:'ئ',l:'z',f:'lp'},{c:'ء',l:'x',f:'lr'},{c:'ؤ',l:'c',f:'lm'},{c:'ر',l:'v',f:'li'},{c:'لا',l:'b',f:'li'},{c:'ى',l:'n',f:'ri'},{c:'ة',l:'m',f:'ri'},{c:'و',l:',',f:'rm'},{c:'ز',l:'.',f:'rr'},{c:'ظ',l:'/',f:'rp'},{lbl:'⇧',l:'SHIFT2',cls:'wide wider'}],
+    [{lbl:'Ctrl',l:'CTRL',cls:'wide'},{lbl:'Alt',l:'ALT',cls:'wide'},{lbl:'Space',l:'SPACE',cls:'sp'},{lbl:'Alt',l:'ALT2',cls:'wide'},{lbl:'Ctrl',l:'CTRL2',cls:'wide'}],
+  ],isRTL:true},
+  ur:{rows:[
+    [{c:'~',l:'`',f:'lp'},{c:'!',l:'1',f:'lp'},{c:'@',l:'2',f:'lr'},{c:'#',l:'3',f:'lm'},{c:'$',l:'4',f:'li'},{c:'%',l:'5',f:'li'},{c:'^',l:'6',f:'ri'},{c:'&',l:'7',f:'ri'},{c:'*',l:'8',f:'rm'},{c:'(',l:'9',f:'rr'},{c:')',l:'0',f:'rp'},{c:'-',l:'-',f:'rp'},{c:'=',l:'=',f:'rp'},{lbl:'⌫',l:'BS',cls:'bs'}],
+    [{lbl:'Tab',l:'TAB',cls:'wide'},{c:'ق',l:'q',f:'lp'},{c:'و',l:'w',f:'lr'},{c:'ع',l:'e',f:'lm'},{c:'ر',l:'r',f:'li'},{c:'ت',l:'t',f:'li'},{c:'ے',l:'y',f:'ri'},{c:'ء',l:'u',f:'ri'},{c:'ی',l:'i',f:'rm'},{c:'و',l:'o',f:'rr'},{c:'پ',l:'p',f:'rp'},{c:'[',l:'[',f:'rp'},{c:']',l:']',f:'rp'},{c:'\\',l:'\\',f:'rp'}],
+    [{lbl:'Caps',l:'CAPS',cls:'wide wider'},{c:'ا',l:'a',f:'lp',home:1},{c:'س',l:'s',f:'lr',home:1},{c:'د',l:'d',f:'lm',home:1},{c:'ف',l:'f',f:'li',home:1},{c:'گ',l:'g',f:'li'},{c:'ھ',l:'h',f:'ri'},{c:'ج',l:'j',f:'ri',home:1},{c:'ک',l:'k',f:'rm',home:1},{c:'ل',l:'l',f:'rr',home:1},{c:'؛',l:';',f:'rp',home:1},{c:"'",l:"'",f:'rp'},{lbl:'↵',l:'ENTER',cls:'en'}],
+    [{lbl:'⇧',l:'SHIFT',cls:'wide wider'},{c:'ز',l:'z',f:'lp'},{c:'ش',l:'x',f:'lr'},{c:'چ',l:'c',f:'lm'},{c:'ط',l:'v',f:'li'},{c:'ب',l:'b',f:'li'},{c:'ن',l:'n',f:'ri'},{c:'م',l:'m',f:'ri'},{c:'،',l:',',f:'rm'},{c:'۔',l:'.',f:'rr'},{c:'/',l:'/',f:'rp'},{lbl:'⇧',l:'SHIFT2',cls:'wide wider'}],
+    [{lbl:'Ctrl',l:'CTRL',cls:'wide'},{lbl:'Alt',l:'ALT',cls:'wide'},{lbl:'Space',l:'SPACE',cls:'sp'},{lbl:'Alt',l:'ALT2',cls:'wide'},{lbl:'Ctrl',l:'CTRL2',cls:'wide'}],
+  ],isRTL:true},
+  bn:{rows:[
+    [{c:'`',l:'`',f:'lp'},{c:'১',l:'1',f:'lp'},{c:'২',l:'2',f:'lr'},{c:'৩',l:'3',f:'lm'},{c:'৪',l:'4',f:'li'},{c:'৫',l:'5',f:'li'},{c:'৬',l:'6',f:'ri'},{c:'৭',l:'7',f:'ri'},{c:'৮',l:'8',f:'rm'},{c:'৯',l:'9',f:'rr'},{c:'০',l:'0',f:'rp'},{c:'-',l:'-',f:'rp'},{c:'=',l:'=',f:'rp'},{lbl:'⌫',l:'BS',cls:'bs'}],
+    [{lbl:'Tab',l:'TAB',cls:'wide'},{c:'ক',l:'q',f:'lp'},{c:'ও',l:'w',f:'lr'},{c:'এ',l:'e',f:'lm'},{c:'র',l:'r',f:'li'},{c:'ত',l:'t',f:'li'},{c:'য',l:'y',f:'ri'},{c:'উ',l:'u',f:'ri'},{c:'ই',l:'i',f:'rm'},{c:'ো',l:'o',f:'rr'},{c:'প',l:'p',f:'rp'},{c:'[',l:'[',f:'rp'},{c:']',l:']',f:'rp'},{c:'\\',l:'\\',f:'rp'}],
+    [{lbl:'Caps',l:'CAPS',cls:'wide wider'},{c:'আ',l:'a',f:'lp',home:1},{c:'স',l:'s',f:'lr',home:1},{c:'দ',l:'d',f:'lm',home:1},{c:'ফ',l:'f',f:'li',home:1},{c:'গ',l:'g',f:'li'},{c:'হ',l:'h',f:'ri'},{c:'জ',l:'j',f:'ri',home:1},{c:'খ',l:'k',f:'rm',home:1},{c:'ল',l:'l',f:'rr',home:1},{c:';',l:';',f:'rp',home:1},{c:"'",l:"'",f:'rp'},{lbl:'↵',l:'ENTER',cls:'en'}],
+    [{lbl:'⇧',l:'SHIFT',cls:'wide wider'},{c:'জ়',l:'z',f:'lp'},{c:'ষ',l:'x',f:'lr'},{c:'চ',l:'c',f:'lm'},{c:'ভ',l:'v',f:'li'},{c:'ব',l:'b',f:'li'},{c:'ন',l:'n',f:'ri'},{c:'ম',l:'m',f:'ri'},{c:'ং',l:',',f:'rm'},{c:'।',l:'.',f:'rr'},{c:'?',l:'/',f:'rp'},{lbl:'⇧',l:'SHIFT2',cls:'wide wider'}],
+    [{lbl:'Ctrl',l:'CTRL',cls:'wide'},{lbl:'Alt',l:'ALT',cls:'wide'},{lbl:'Space',l:'SPACE',cls:'sp'},{lbl:'Alt',l:'ALT2',cls:'wide'},{lbl:'Ctrl',l:'CTRL2',cls:'wide'}],
+  ],isRTL:false},
+};
+
+/* ═══════════════════════════════════════════════════
+   LESSON DATA  (50/60/40/40)
+   Each lesson: {t, sub, hint, text, tag, lv, phase, wpmTarget, unlock}
+   tag: easy|medium|hard|expert
+   lv: 0-5 (phase index)
+   unlock: minimum accuracy % to pass (default 70)
+═══════════════════════════════════════════════════ */
+const PHASES={
+  en:['🟢 Phase 1 — Individual keys','🔵 Phase 2 — Two-row combinations','🟡 Phase 3 — Common words','🟠 Phase 4 — Full sentences','🔴 Phase 5 — Numbers & symbols','⚡ Phase 6 — Speed drills','💀 Phase 7 — Expert'],
+  ar:['🟢 Phase 1 — Individual letters','🔵 Phase 2 — Letter groups & shapes','🟡 Phase 3 — Keyboard zones','🟠 Phase 4 — Common words','🔴 Phase 5 — Sentences & texts','⚡ Phase 6 — Speed drills','💀 Phase 7 — Expert'],
+  ur:['🟢 Phase 1 — All Urdu letters','🔵 Phase 2 — Words & vocabulary','🟡 Phase 3 — Sentences','🟠 Phase 4 — Literature & poetry','🔴 Phase 5 — Speed drills','💀 Phase 6 — Expert'],
+  bn:['🟢 Phase 1 — Vowels & consonants','🔵 Phase 2 — Words','🟡 Phase 3 — Sentences','🟠 Phase 4 — Literature','🔴 Phase 5 — Speed drills','💀 Phase 6 — Expert'],
+};
+
+const LESSONS_DATA={
+en:[
+{t:'L1 — Home row left',sub:'a s d f g',hint:'Left hand only. Never lift fingers off home row.',text:'asdf fdsa asdf fdsa aaaa ssss dddd ffff asd fds',tag:'easy',lv:0,wpmT:12},
+{t:'L2 — Home row right',sub:'j k l ;',hint:'Right hand only. J has the bump — find it without looking.',text:'jkl; ;lkj jkl; ;lkj jjjj kkkk llll ;;;; jkl ;lk',tag:'easy',lv:0,wpmT:12},
+{t:'L3 — Home row both hands',sub:'asdf jkl;',hint:'Both hands together. Return to home row after every key.',text:'asdf jkl; fjfj dkdk slsl a;a; fj dk sl asdf',tag:'easy',lv:0,wpmT:15},
+{t:'L4 — g h middle keys',sub:'g h the bridge keys',hint:'G uses left index, H uses right index.',text:'fg gh hj fgh ghj fghj gfhj hgfj fgh ghj',tag:'easy',lv:0,wpmT:14},
+{t:'L5 — Home row words',sub:'Real words, no reaching',hint:'Real English words using only home row keys.',text:'fall glad half jag ask lad sad dash flask ash',tag:'easy',lv:0,wpmT:18},
+{t:'L6 — More home row words',sub:'Longer home row words',hint:'Longer words — still just home row keys.',text:'shall glass hall flask salads glad falls lads',tag:'easy',lv:0,wpmT:18},
+{t:'L7 — Top row left',sub:'q w e r t',hint:'Reach up from home row with your left hand fingers.',text:'qwert tqwer qwert rtewq eqwtr qwer ewrt trq',tag:'easy',lv:0,wpmT:12},
+{t:'L8 — Top row right',sub:'y u i o p',hint:'Right hand reaches up. Keep left hand anchored on home.',text:'yuiop poiuy yuiop opiuy yuio piou yipu opy',tag:'easy',lv:0,wpmT:12},
+{t:'L9 — Bottom row left',sub:'z x c v b',hint:'Reach down carefully. Pinky on Z, ring on X.',text:'zxcvb bvcxz zxcv vczx zbvc xczb vbcx zcv',tag:'easy',lv:0,wpmT:12},
+{t:'L10 — Bottom row right',sub:'n m , . /',hint:'Right hand reaches down. Keep J as your anchor.',text:'nm,./ /.,mn nm,. .,nm nm/, /,mn nm,. /nm',tag:'easy',lv:0,wpmT:12},
+{t:'L11 — Home + top left',sub:'Combining two rows',hint:'Alternate between home and top row with left hand.',text:'qasw qasw eadr rfgt qwer asdf qwas erdf',tag:'easy',lv:1,wpmT:16},
+{t:'L12 — Home + top right',sub:'Two rows, right hand',hint:'Alternate between home and top row with right hand.',text:'juyh kioj loip ;p;o juhy kioj juky lopi',tag:'easy',lv:1,wpmT:16},
+{t:'L13 — Home + bottom left',sub:'Two rows, left hand down',hint:'Home row and bottom row combined with left hand.',text:'azsw xdce vfgb azxc sxdv fgvb azxs dcvf',tag:'easy',lv:1,wpmT:14},
+{t:'L14 — Home + bottom right',sub:'Two rows, right hand down',hint:'Home and bottom row combined with right hand.',text:'jnhm k,il l.o; jnkm ,ihj .okl jnhm ki,l',tag:'easy',lv:1,wpmT:14},
+{t:'L15 — Top row words',sub:'Real words from top rows',hint:'Real words using top and home rows.',text:'your type power write sure top rope quit word wet',tag:'easy',lv:1,wpmT:22},
+{t:'L16 — Three rows combined',sub:'All rows at once',hint:'Use all three rows for the first time together.',text:'the quick brown fox over lazy dog pack box',tag:'medium',lv:1,wpmT:22},
+{t:'L17 — Full pangram',sub:'All 26 letters',hint:'Every letter of the alphabet — the classic benchmark.',text:'the quick brown fox jumps over the lazy dog',tag:'medium',lv:1,wpmT:25},
+{t:'L18 — Alphabet in order',sub:'a b c d ... z',hint:'Type the alphabet in order — test your finger memory.',text:'abcdefghijklmnopqrstuvwxyz abcdefghij',tag:'medium',lv:1,wpmT:20},
+{t:'L19 — Common 2-letter words',sub:'to of in is it',hint:'These tiny words appear in every sentence.',text:'to of in is it as at be by do go he if me no on or',tag:'easy',lv:1,wpmT:28},
+{t:'L20 — Common 3-letter words',sub:'the and for are',hint:'3-letter words make up a huge part of all text.',text:'the and for are but not you can all get has was',tag:'easy',lv:1,wpmT:28},
+{t:'L21 — Top 10 words',sub:'Most common English words',hint:'These 10 words = 25% of all English text.',text:'the be to of and a in that have it the be to of',tag:'easy',lv:2,wpmT:30},
+{t:'L22 — Words 11-25',sub:'Next most common words',hint:'Add more high-frequency words to your memory.',text:'for is on are with as at this but by from they we',tag:'easy',lv:2,wpmT:30},
+{t:'L23 — Words 26-50',sub:'More frequent words',hint:'More words that appear constantly in everyday writing.',text:'say her she or an will my one all would there their',tag:'medium',lv:2,wpmT:28},
+{t:'L24 — 4-letter words',sub:'Common 4-letter words',hint:'Medium length words — practice until they feel automatic.',text:'that this from they with have been will your said',tag:'medium',lv:2,wpmT:28},
+{t:'L25 — 5-letter words',sub:'Common 5-letter words',hint:'Slightly longer — focus on finger placement, not speed.',text:'their there about which would other after first time',tag:'medium',lv:2,wpmT:26},
+{t:'L26 — Action verbs',sub:'Run see go make take',hint:'The most common English action words.',text:'run see go make come take know get give find think',tag:'medium',lv:2,wpmT:26},
+{t:'L27 — Descriptive words',sub:'Common adjectives',hint:'Describing words that appear in most sentences.',text:'good new first last long great little own right big',tag:'medium',lv:2,wpmT:26},
+{t:'L28 — Days and months',sub:'Days months seasons',hint:'Words about time that you type constantly.',text:'Monday Tuesday Wednesday Thursday Friday Saturday Sunday',tag:'medium',lv:2,wpmT:22},
+{t:'L29 — Numbers as words',sub:'Spell out numbers',hint:'Typing numbers as words builds accuracy and rhythm.',text:'one two three four five six seven eight nine ten',tag:'easy',lv:2,wpmT:25},
+{t:'L30 — Bigger numbers',sub:'Eleven through twenty',hint:'Continue spelling out numbers for accuracy practice.',text:'eleven twelve thirteen fourteen fifteen sixteen twenty',tag:'medium',lv:2,wpmT:22},
+{t:'L31 — Colors',sub:'Color vocabulary',hint:'Color words are short and perfect for rhythm practice.',text:'red blue green yellow orange purple black white pink',tag:'easy',lv:2,wpmT:28},
+{t:'L32 — Body parts',sub:'Common nouns',hint:'Body part nouns are great for consistent practice.',text:'head eyes nose mouth ears hand foot arm leg back',tag:'easy',lv:2,wpmT:28},
+{t:'L33 — Food words',sub:'Common food vocabulary',hint:'Food vocabulary you type in messages every day.',text:'rice bread meat fish milk egg fruit soup cake tea',tag:'easy',lv:2,wpmT:28},
+{t:'L34 — Place words',sub:'Location vocabulary',hint:'Place words used in everyday writing.',text:'home school office market street city town village',tag:'easy',lv:2,wpmT:28},
+{t:'L35 — Mixed common words',sub:'All categories together',hint:'Mixed bag of the most common words — build fluency.',text:'people time year way day man new first think also',tag:'medium',lv:2,wpmT:30},
+{t:'L36 — First simple sentence',sub:'Subject + verb',hint:'Your first complete sentence. Focus on punctuation.',text:'I like to type. She reads books. He runs fast.',tag:'medium',lv:3,wpmT:28},
+{t:'L37 — Subject verb object',sub:'Complete sentences',hint:'Add objects to make complete thoughts.',text:'She reads a book. He drinks water. I eat rice daily.',tag:'medium',lv:3,wpmT:28},
+{t:'L38 — Questions',sub:'Sentences ending in ?',hint:'Question sentences need the ? key — reach precisely.',text:'How are you? What is your name? Where do you live?',tag:'medium',lv:3,wpmT:26},
+{t:'L39 — Exclamations',sub:'Sentences ending in !',hint:'Exclamation mark — reach for it with Shift+1.',text:'Good morning! Well done! Keep it up! Great job today!',tag:'medium',lv:3,wpmT:26},
+{t:'L40 — Commas in sentences',sub:'Comma usage practice',hint:'Commas separate clauses — reach precisely.',text:'Yes, I can. No, I cannot. Well, maybe tomorrow, right?',tag:'medium',lv:3,wpmT:26},
+{t:'L41 — Capital letters',sub:'Shift key practice',hint:'Opposite hand holds Shift while the other types.',text:'Hello World. My Name Is TypeMaster. I Love Typing Fast.',tag:'medium',lv:3,wpmT:24},
+{t:'L42 — Proper nouns',sub:'Names and places',hint:'Proper nouns always start with a capital letter.',text:'Bangladesh Dhaka London Paris Tokyo New York Beijing',tag:'medium',lv:3,wpmT:24},
+{t:'L43 — Mixed punctuation',sub:'. , ? ! together',hint:'Mix all basic punctuation marks in one exercise.',text:'Hello, how are you? I am fine! Yes, thank you very much.',tag:'medium',lv:3,wpmT:24},
+{t:'L44 — Longer sentence',sub:'One long sentence',hint:'Maintain accuracy through the whole sentence.',text:'She sells seashells by the seashore every single morning.',tag:'medium',lv:3,wpmT:26},
+{t:'L45 — Two sentences',sub:'Back to back sentences',hint:'No pause between sentences — keep your rhythm going.',text:'The sun rises in the east. Birds sing every morning.',tag:'medium',lv:3,wpmT:28},
+{t:'L46 — Dialogue',sub:'He said she said',hint:'Quotes and commas used together in real dialogue.',text:'She said hello. He replied how are you today. Fine thanks.',tag:'medium',lv:3,wpmT:26},
+{t:'L47 — Professional email',sub:'Real-world writing',hint:'Text you type every day at work or school.',text:'Dear Sir, I am writing about the project. Please reply soon.',tag:'medium',lv:3,wpmT:24},
+{t:'L48 — Short paragraph',sub:'Three connected sentences',hint:'Three sentences in a row — keep your pace consistent.',text:'Practice every day. Speed comes after accuracy. Be patient.',tag:'medium',lv:3,wpmT:26},
+{t:'L49 — Instructions',sub:'How-to style writing',hint:'Instruction-style sentences use imperative verbs.',text:'Open the file. Click the button. Save your work now.',tag:'medium',lv:3,wpmT:28},
+{t:'L50 — Comparison sentences',sub:'Using than and as',hint:'Comparison structures appear in formal writing.',text:'This is faster than that. He is as tall as his brother.',tag:'medium',lv:3,wpmT:26},
+{t:'L51 — Negative sentences',sub:'Using not and never',hint:'Negative sentences with common contractions.',text:'I do not know. She does not want to go. He never gives up.',tag:'medium',lv:3,wpmT:26},
+{t:'L52 — Conjunctions',sub:'and but or so because',hint:'Joining words connect ideas — practice them together.',text:'I like tea but she likes coffee so we both drink water.',tag:'medium',lv:3,wpmT:26},
+{t:'L53 — Prepositions',sub:'in on at by with from',hint:'Prepositions are small but critical — type precisely.',text:'The book is on the table. She sat by the window at noon.',tag:'medium',lv:3,wpmT:26},
+{t:'L54 — Full paragraph 1',sub:'Four sentences together',hint:'Longer text — pace yourself and do not rush.',text:'Touch typing is a valuable skill. Practice builds speed. Accuracy comes first. Never look at your hands.',tag:'hard',lv:3,wpmT:28},
+{t:'L55 — Full paragraph 2',sub:'Real-world paragraph',hint:'The kind of text you type every day in real life.',text:'Thank you for your email. I will review your request and get back to you soon. Have a great day.',tag:'hard',lv:3,wpmT:26},
+{t:'L56 — Number row',sub:'1 2 3 4 5 6 7 8 9 0',hint:'Big stretches needed — go slow. Accuracy first.',text:'12 34 56 78 90 123 456 789 100 2024 1080',tag:'medium',lv:4,wpmT:20},
+{t:'L57 — Numbers in text',sub:'Numbers inside sentences',hint:'Numbers embedded in words — very common in real writing.',text:'I have 3 books. She is 25 years old. Buy 10 apples.',tag:'medium',lv:4,wpmT:22},
+{t:'L58 — Basic symbols',sub:'! @ # $ %',hint:'Top row with Shift — stretch fingers carefully.',text:'hello! price $99 email@test.com #1 top 100%',tag:'hard',lv:4,wpmT:18},
+{t:'L59 — More symbols',sub:'& * ( ) _ +',hint:'More Shift combinations — each needs a precise reach.',text:'x+y=5 (a+b) c*d arr[0] price_tag a&&b',tag:'hard',lv:4,wpmT:16},
+{t:'L60 — Brackets and braces',sub:'{ } [ ] ( )',hint:'Essential for coding — these are your most common pairs.',text:'(hello) [world] {name} (a+b) [0] {key}',tag:'hard',lv:4,wpmT:16},
+{t:'L61 — Punctuation marks',sub:': ; - _',hint:'Secondary punctuation used in formal writing.',text:'note: done; it is great self-made sure ready',tag:'hard',lv:4,wpmT:16},
+{t:'L62 — Email typing',sub:'@ . - _ in emails',hint:'Email addresses are typed every day — be precise.',text:'user@example.com admin@test.org no-reply@site.net',tag:'hard',lv:4,wpmT:18},
+{t:'L63 — URL typing',sub:'https:// www . com',hint:'Web addresses — colons and slashes need precise reach.',text:'https://www.example.com/page?id=1&lang=en',tag:'hard',lv:4,wpmT:16},
+{t:'L64 — Phone and date',sub:'Numbers with separators',hint:'Dates and phone numbers typed in every form.',text:'01-01-2024 +880-1711-000000 ID: 2024/001',tag:'hard',lv:4,wpmT:18},
+{t:'L65 — Basic code',sub:'First code line',hint:'Simple code — brackets and symbols together.',text:'x = 5; y = 10; z = x + y; print(z);',tag:'hard',lv:4,wpmT:16},
+{t:'L66 — JavaScript code',sub:'Real JS syntax',hint:'Actual JavaScript — every character matters.',text:'const add = (a, b) => a + b; console.log(add(2, 3));',tag:'hard',lv:4,wpmT:14},
+{t:'L67 — Python code',sub:'Real Python syntax',hint:'Python code — clean but every character counts.',text:'def greet(name): return name print(greet(world))',tag:'hard',lv:4,wpmT:14},
+{t:'L68 — Mixed numbers symbols',sub:'Everything together',hint:'Real-world mixed content — the hardest combination.',text:'In 2024, over 5 billion+ people use the internet daily!',tag:'hard',lv:4,wpmT:22},
+{t:'L69 — Password style',sub:'Complex character mix',hint:'Passwords combine all character types — good typing test.',text:'Abc123! Pass@2024 Admin#99 User$Test TypeM@ster1',tag:'hard',lv:4,wpmT:16},
+{t:'L70 — Markdown text',sub:'Common markdown syntax',hint:'Markdown is used in GitHub, docs, notes everywhere.',text:'Heading bold italic code link url text here',tag:'hard',lv:4,wpmT:14},
+{t:'L71 — Speed: 2-letter words',sub:'Maximum speed drill',hint:'So short there is no thinking needed — pure muscle memory.',text:'to of in is it as at be by do go he if me no on or',tag:'medium',lv:5,wpmT:40},
+{t:'L72 — Speed: 3-letter words',sub:'Common short words fast',hint:'Aim for 40+ WPM. These words should feel automatic.',text:'the and for are but not you can all get has was',tag:'medium',lv:5,wpmT:40},
+{t:'L73 — Speed: home row only',sub:'Fastest possible zone',hint:'No reaching needed — go as fast as humanly possible.',text:'fall glad half jag ask lad sad flask shall ash glass',tag:'medium',lv:5,wpmT:50},
+{t:'L74 — Speed: pangram',sub:'Classic WPM benchmark',hint:'The standard typing speed test. All 26 letters.',text:'The quick brown fox jumps over the lazy dog',tag:'hard',lv:5,wpmT:40},
+{t:'L75 — Speed: double pangram',sub:'Two pangrams back to back',hint:'No pause between them — full speed throughout.',text:'Pack my box with five dozen liquor jugs. How quickly daft jumping zebras vex.',tag:'hard',lv:5,wpmT:38},
+{t:'L76 — Speed: top 15 words',sub:'Top words at speed',hint:'Words so common they should flow with zero thought.',text:'the to and a in is it that for on are with as at his',tag:'hard',lv:5,wpmT:45},
+{t:'L77 — Speed: medium words',sub:'6-letter words at speed',hint:'Keep consistent rhythm — no pausing mid-word.',text:'people things always should better little really world',tag:'hard',lv:5,wpmT:32},
+{t:'L78 — Speed: long words',sub:'5-syllable words',hint:'Accuracy is critical for long words.',text:'information important government understanding technology',tag:'hard',lv:5,wpmT:28},
+{t:'L79 — Speed: sentences',sub:'Full sentences at speed',hint:'Complete thoughts — no pausing between words.',text:'She works every day. He never gives up. They always win.',tag:'hard',lv:5,wpmT:38},
+{t:'L80 — Speed: alternating hands',sub:'QWERTY alternating keys',hint:'Words designed to alternate between hands for speed.',text:'right blame slap form proxy world laugh torn name',tag:'hard',lv:5,wpmT:40},
+{t:'L81 — Speed: same hand words',sub:'One-hand word challenges',hint:'Same-hand words are harder — great for coordination.',text:'steward reserve decreed million billion trillion',tag:'hard',lv:5,wpmT:32},
+{t:'L82 — Speed: number sentences',sub:'Numbers in full sentences',hint:'Numbers slow most typists — drill them at speed.',text:'I have 15 books and 8 pens. She bought 3 bags for $24.',tag:'hard',lv:5,wpmT:28},
+{t:'L83 — Speed: punctuation drill',sub:'Punctuation at speed',hint:'Punctuation is where speed drops — drill it hard.',text:'Yes, I can. No, I will not. Well? Maybe! Okay, fine.',tag:'hard',lv:5,wpmT:30},
+{t:'L84 — Speed: full paragraph',sub:'Long text, high speed',hint:'Full paragraph — aim to finish without slowing down.',text:'The art of touch typing rewards daily practice. Build speed gradually. Never sacrifice accuracy for speed.',tag:'hard',lv:5,wpmT:35},
+{t:'L85 — Speed: mixed drill',sub:'All types at speed',hint:'Numbers, symbols, words, sentences — maximum challenge.',text:'In 2024, 5 billion+ users! Visit https://example.com today.',tag:'hard',lv:5,wpmT:25},
+{t:'L86 — Expert: code block',sub:'Function typing',hint:'Full code block — every character is critical.',text:'function greet(name) { return name + \' hello\'; }',tag:'expert',lv:6,wpmT:20},
+{t:'L87 — Expert: HTML',sub:'HTML tag typing',hint:'HTML is typed by developers every day — be precise.',text:'div class box p Hello World p div',tag:'expert',lv:6,wpmT:18},
+{t:'L88 — Expert: SQL query',sub:'Database query typing',hint:'SQL queries need precise symbols and keywords.',text:'SELECT name, age FROM users WHERE age > 18 ORDER BY name;',tag:'expert',lv:6,wpmT:18},
+{t:'L89 — Expert: long paragraph',sub:'200+ character paragraph',hint:'Longest text so far — pace yourself from start to finish.',text:'Practice makes perfect. The more you type every day, the faster and more accurate you will become over time.',tag:'expert',lv:6,wpmT:35},
+{t:'L90 — Expert: academic writing',sub:'Formal academic style',hint:'Formal text with complex vocabulary — real-world challenge.',text:'The study demonstrates a significant correlation between practice frequency and typing speed improvement.',tag:'expert',lv:6,wpmT:30},
+{t:'L91 — Expert: news headline',sub:'Journalism style',hint:'News headlines pack maximum information into few words.',text:'Scientists Discover 3 New Planets! Report: 45% Growth in 2024.',tag:'expert',lv:6,wpmT:28},
+{t:'L92 — Expert: technical text',sub:'Technical documentation',hint:'Technical writing mixes jargon, acronyms and symbols.',text:'The API returns status 200 with JSON data and ok flag true.',tag:'expert',lv:6,wpmT:22},
+{t:'L93 — Expert: poetry',sub:'Free verse typing',hint:'Poetry has unusual rhythm — test your adaptability.',text:'I have promises to keep and miles to go before I sleep.',tag:'expert',lv:6,wpmT:32},
+{t:'L94 — Expert: symbols storm',sub:'Maximum symbol density',hint:'Every special character you know — all at once.',text:'price $99.99 off 50% email@rate.com arr[0]++ x&&y||z',tag:'expert',lv:6,wpmT:16},
+{t:'L95 — Expert: speed 50 WPM',sub:'Target: 50 WPM',hint:'Push your speed — aim for 50 words per minute here.',text:'The quick brown fox jumps over the lazy dog every single time',tag:'expert',lv:6,wpmT:50},
+{t:'L96 — Expert: speed 50 WPM 2',sub:'Second 50 WPM target',hint:'Another speed benchmark — maintain 50 WPM accuracy.',text:'Pack my box with five dozen liquor jugs right away please',tag:'expert',lv:6,wpmT:50},
+{t:'L97 — Expert: developer text',sub:'Real developer writing',hint:'The kind of text developers type every day at work.',text:'git commit fix resolve login bug 142 and git push origin main',tag:'expert',lv:6,wpmT:18},
+{t:'L98 — Expert: full page',sub:'Longest lesson',hint:'The longest single text — your ultimate endurance test.',text:'Touch typing is the most valuable skill for anyone who works with computers. It frees your mind to focus on content instead of keys.',tag:'expert',lv:6,wpmT:35},
+{t:'L99 — Expert: ultimate mixed',sub:'Every key type combined',hint:'Numbers, symbols, code, punctuation, words — everything.',text:'In 2024, 5B+ users! Cost $99.99 off 50%. Visit site.com ref=1',tag:'expert',lv:6,wpmT:20},
+{t:'L100 — Master finale',sub:'The final challenge',hint:'You have reached the final lesson. Give it everything!',text:'The quick brown fox jumps over the lazy dog. Pack my box with five dozen liquor jugs. 0123456789!',tag:'expert',lv:6,wpmT:45}
+],
+ar:[
+{t:'الدرس ١ — حرف الألف',sub:'ا',hint:'ابدأ بأبسط الحروف — الألف.',text:'ا ا ا ا ا ا ا ا ا ا ا ا ا ا',tag:'easy',lv:0,wpmT:8},
+{t:'الدرس ٢ — حرف الباء',sub:'ب',hint:'الباء — نقطة واحدة أسفل.',text:'ب ب ب ب ب ب ب ب ب ب ب ب',tag:'easy',lv:0,wpmT:8},
+{t:'الدرس ٣ — ب ت ث',sub:'ب ت ث — عائلة النقاط',hint:'نفس الشكل — الفرق في النقاط فقط.',text:'ب ت ث ب ت ث ب ب ت ت ث ث',tag:'easy',lv:0,wpmT:8},
+{t:'الدرس ٤ — ج ح خ',sub:'ج ح خ — عائلة الحاء',hint:'شكل واحد — بلا نقاط، نقطة أسفل، نقطة فوق.',text:'ج ح خ ج ح خ ج ج ح ح خ خ',tag:'easy',lv:0,wpmT:8},
+{t:'الدرس ٥ — د ذ',sub:'د ذ — غير موصولة',hint:'هذان الحرفان لا يتصلان بما بعدهما.',text:'د ذ د ذ د ذ د د ذ ذ',tag:'easy',lv:0,wpmT:8},
+{t:'الدرس ٦ — ر ز',sub:'ر ز — غير موصولة',hint:'ر بلا نقطة، ز بنقطة فوق.',text:'ر ز ر ز ر ز ر ر ز ز',tag:'easy',lv:0,wpmT:8},
+{t:'الدرس ٧ — س ش',sub:'س ش — عائلة السين',hint:'س بلا نقاط، ش بثلاث نقاط.',text:'س ش س ش س ش س س ش ش',tag:'easy',lv:0,wpmT:8},
+{t:'الدرس ٨ — ص ض',sub:'ص ض — المفخمتان',hint:'ص تقابل س لكن مفخمة، ض فريدة للعربية.',text:'ص ض ص ض ص ض ص ص ض ض',tag:'easy',lv:0,wpmT:8},
+{t:'الدرس ٩ — ط ظ',sub:'ط ظ — المفخمتان',hint:'ط مفخمة وظ مفخمة — انتبه للنقطة في ظ.',text:'ط ظ ط ظ ط ظ ط ط ظ ظ',tag:'easy',lv:0,wpmT:8},
+{t:'الدرس ١٠ — ع غ',sub:'ع غ — أصوات خاصة',hint:'ع وغ لا مثيل لهما في أي لغة أخرى.',text:'ع غ ع غ ع غ ع ع غ غ',tag:'easy',lv:0,wpmT:8},
+{t:'الدرس ١١ — ف ق',sub:'ف ق — نقطة ونقطتان',hint:'ف بنقطة فوق الدائرة، ق بنقطتين.',text:'ف ق ف ق ف ق ف ف ق ق',tag:'easy',lv:0,wpmT:8},
+{t:'الدرس ١٢ — ك ل',sub:'ك ل — شكلان مميزان',hint:'ك ول من أكثر الحروف استخداماً.',text:'ك ل ك ل ك ل ك ك ل ل',tag:'easy',lv:0,wpmT:8},
+{t:'الدرس ١٣ — م ن',sub:'م ن — ميم ونون',hint:'م دائرة صغيرة، ن بنقطة أسفل.',text:'م ن م ن م ن م م ن ن',tag:'easy',lv:0,wpmT:8},
+{t:'الدرس ١٤ — ه و ي',sub:'ه و ي — الأخيرة',hint:'ه تتغير شكلها بحسب الموضع.',text:'ه و ي ه و ي ه ه و و ي ي',tag:'easy',lv:0,wpmT:8},
+{t:'الدرس ١٥ — الأبجدية كاملة',sub:'كل الحروف الـ ٢٨',hint:'استعراض كامل للأبجدية العربية.',text:'ا ب ت ث ج ح خ د ذ ر ز س ش ص ض ط ظ ع غ ف ق ك ل م ن ه و ي',tag:'easy',lv:0,wpmT:8},
+{t:'الدرس ١٦ — ب ت ث ن ي',sub:'الحروف المنقوطة المتشابهة',hint:'كلها تشترك في الشكل الأساسي.',text:'ب ت ث ن ي ب ت ث ن ي بت تث ثن',tag:'easy',lv:1,wpmT:10},
+{t:'الدرس ١٧ — عائلة ج ح خ',sub:'الحروف المتشابهة',hint:'احفظ: بلا نقاط=ح، نقطة أسفل=ج، نقطة فوق=خ.',text:'ج ح خ جح حخ خج جحخ',tag:'easy',lv:1,wpmT:10},
+{t:'الدرس ١٨ — عائلة س ش ص ض',sub:'الشكل الأساسي الواحد',hint:'س=بلا نقاط، ش=ثلاث نقاط.',text:'س ش ص ض سش صض شس ضص',tag:'easy',lv:1,wpmT:10},
+{t:'الدرس ١٩ — الحروف غير الموصولة',sub:'ا د ذ ر ز و',hint:'هذه الستة لا تتصل بما يليها.',text:'ا د ذ ر ز و ادذ رزو ادرز',tag:'easy',lv:1,wpmT:10},
+{t:'الدرس ٢٠ — مراجعة الحروف',sub:'مراجعة كاملة',hint:'مراجعة جميع حروف الأبجدية العربية.',text:'ا ب ج د ه و ز ح ط ي ك ل م ن',tag:'easy',lv:1,wpmT:10},
+{t:'الدرس ٢١ — مقاطع ثنائية',sub:'حرفان معاً',hint:'ابدأ بربط الحروف — مقاطع ثنائية بسيطة.',text:'با تا ثا جا حا خا دا ذا را زا سا',tag:'easy',lv:1,wpmT:12},
+{t:'الدرس ٢٢ — مقاطع ثلاثية',sub:'ثلاثة حروف مربوطة',hint:'ربط ثلاثة حروف.',text:'بات ثاب جاب حاد دار راح ساب شاد',tag:'easy',lv:1,wpmT:12},
+{t:'الدرس ٢٣ — أشكال الوصل',sub:'الحرف في مواضعه الأربعة',hint:'لاحظ كيف يتغير شكل الحرف بحسب موقعه.',text:'بيت كتب ابن قلب صبر جلس شمس',tag:'medium',lv:1,wpmT:12},
+{t:'الدرس ٢٤ — الصف الرئيسي',sub:'ش س ي ب ل ا ت ن م ك',hint:'الصف الأوسط في لوحة المفاتيح العربية.',text:'شس يب لا تن مك شس يب لا تن',tag:'medium',lv:1,wpmT:13},
+{t:'الدرس ٢٥ — الصف العلوي',sub:'ض ص ث ق ف غ ع ه خ ح',hint:'الصف العلوي — تمتد الأصابع للأعلى.',text:'ضص ثق فغ عه خح ضص ثق',tag:'medium',lv:2,wpmT:12},
+{t:'الدرس ٢٦ — الصف السفلي',sub:'ئ ء ؤ ر لا ى ة و ز ظ',hint:'الصف السفلي — تمتد الأصابع للأسفل.',text:'ئء ؤر لاى ةو زظ ئء ؤر',tag:'medium',lv:2,wpmT:12},
+{t:'الدرس ٢٧ — الصفوف الثلاثة',sub:'كل المناطق معاً',hint:'استخدام جميع الصفوف معاً.',text:'بيت سماء ظلام نور قمر شمس',tag:'medium',lv:2,wpmT:14},
+{t:'الدرس ٢٨ — الأرقام العربية',sub:'٠ ١ ٢ ٣ ٤ ٥ ٦ ٧ ٨ ٩',hint:'الأرقام الهندية-العربية.',text:'١ ٢ ٣ ٤ ٥ ٦ ٧ ٨ ٩ ٠ ١٢ ٣٤ ٥٦',tag:'medium',lv:2,wpmT:14},
+{t:'الدرس ٢٩ — علامات الترقيم',sub:'، . ؟ ! : ؛',hint:'علامات الترقيم العربية.',text:'مرحباً، كيف حالك؟ بخير، شكراً! ما اسمك؟',tag:'medium',lv:2,wpmT:12},
+{t:'الدرس ٣٠ — لام ألف',sub:'لا — الربط الخاص',hint:'لا حرف مركب خاص يتكون أوتوماتيكياً.',text:'لا لا لا نعم لا لا نعم لا',tag:'easy',lv:2,wpmT:16},
+{t:'الدرس ٣١ — كلمات قصيرة',sub:'ما في به من يا',hint:'كلمات قصيرة شائعة جداً.',text:'ما في به من يا له بل ثم أو لو',tag:'easy',lv:2,wpmT:18},
+{t:'الدرس ٣٢ — كلمات رباعية',sub:'أربعة حروف',hint:'كلمات متوسطة الطول.',text:'كتاب باب نور سماء ليل بيوت أرض',tag:'medium',lv:2,wpmT:15},
+{t:'الدرس ٣٣ — كلمات خماسية',sub:'خمسة حروف',hint:'كلمات أطول — انتبه للاتصال.',text:'قلوب ذهاب جمال كمال عمال شباب',tag:'medium',lv:2,wpmT:13},
+{t:'الدرس ٣٤ — اللوحة كاملة',sub:'تدريب شامل',hint:'استخدام كامل للوحة.',text:'بسم الله الرحمن الرحيم والصلاة',tag:'medium',lv:2,wpmT:13},
+{t:'الدرس ٣٥ — أكثر ١٠ كلمات تكراراً',sub:'الكلمات الأعلى استخداماً',hint:'هذه الكلمات تشكل نسبة كبيرة من أي نص عربي.',text:'في من على أن ما هذا إلى وأن التي',tag:'easy',lv:3,wpmT:18},
+{t:'الدرس ٣٦ — الكلمات ١١-٢٠',sub:'الكلمات التالية',hint:'أضف هذه للكلمات التي تعرفها.',text:'وقد كان قال كل مع لم أو هو',tag:'easy',lv:3,wpmT:18},
+{t:'الدرس ٣٧ — تحيات يومية',sub:'أهلاً مرحباً شكراً',hint:'كلمات التحية اليومية.',text:'مرحبا أهلاً شكراً سلام مع السلامة',tag:'easy',lv:3,wpmT:20},
+{t:'الدرس ٣٨ — الأسرة',sub:'الأب الأم الأخ',hint:'مفردات الأسرة الأساسية.',text:'أب أم أخ أخت ابن بنت زوج جد',tag:'easy',lv:3,wpmT:20},
+{t:'الدرس ٣٩ — الألوان',sub:'أحمر أزرق أخضر',hint:'أسماء الألوان بالعربية.',text:'أبيض أسود أحمر أزرق أخضر أصفر',tag:'easy',lv:3,wpmT:20},
+{t:'الدرس ٤٠ — الأماكن',sub:'بيت مدرسة مسجد',hint:'أماكن الحياة اليومية.',text:'بيت مدرسة مسجد سوق شارع مدينة',tag:'easy',lv:3,wpmT:18},
+{t:'الدرس ٤١ — الوقت والأيام',sub:'صباح ظهر مساء',hint:'الوقت والأيام.',text:'صباح ظهر مساء ليل أسبوع شهر سنة',tag:'easy',lv:3,wpmT:20},
+{t:'الدرس ٤٢ — الأعداد بالحروف',sub:'واحد اثنان ثلاثة',hint:'اكتب الأعداد بالحروف.',text:'واحد اثنان ثلاثة أربعة خمسة ستة',tag:'medium',lv:3,wpmT:15},
+{t:'الدرس ٤٣ — الأفعال الشائعة',sub:'قال ذهب جاء',hint:'أكثر الأفعال استخداماً في العربية.',text:'قال ذهب جاء رأى عمل أكل شرب نام',tag:'medium',lv:3,wpmT:18},
+{t:'الدرس ٤٤ — الطعام',sub:'خبز أرز لحم تمر',hint:'مفردات الطعام اليومية.',text:'ماء خبز أرز لحم دجاج تمر زيت ملح',tag:'easy',lv:3,wpmT:20},
+{t:'الدرس ٤٥ — التكنولوجيا',sub:'الحياة الرقمية',hint:'كلمات التكنولوجيا بالعربية.',text:'هاتف حاسوب إنترنت بريد رسالة موقع',tag:'medium',lv:3,wpmT:16},
+{t:'الدرس ٤٦ — الصفات',sub:'كبير صغير جميل',hint:'صفات وصفية شائعة جداً.',text:'كبير صغير جميل قبيح سريع بطيء',tag:'medium',lv:3,wpmT:18},
+{t:'الدرس ٤٧ — حروف الجر',sub:'في على من إلى عن',hint:'حروف الجر تظهر في كل جملة.',text:'في على من إلى عن بين فوق تحت',tag:'easy',lv:3,wpmT:20},
+{t:'الدرس ٤٨ — أدوات الاستفهام',sub:'ما من أين كيف',hint:'كلمات السؤال الأساسية.',text:'ما من أين كيف متى لماذا هل',tag:'easy',lv:3,wpmT:20},
+{t:'الدرس ٤٩ — المهن',sub:'طبيب معلم مهندس',hint:'مفردات المهن.',text:'طبيب معلم مهندس محامي تاجر كاتب',tag:'medium',lv:3,wpmT:16},
+{t:'الدرس ٥٠ — مفردات متنوعة',sub:'تنويع المفردات',hint:'مفردات متنوعة من مجالات مختلفة.',text:'علم حكمة قوة حرية سلام تقدم',tag:'medium',lv:3,wpmT:18},
+{t:'الدرس ٥١ — جملة اسمية',sub:'مبتدأ وخبر بسيط',hint:'الجملة الاسمية لا تحتاج فعلاً.',text:'البيت جميل السماء زرقاء الولد ذكي',tag:'medium',lv:4,wpmT:16},
+{t:'الدرس ٥٢ — جملة فعلية',sub:'فعل وفاعل',hint:'الجملة الفعلية تبدأ بالفعل.',text:'ذهب الولد جاء المعلم أكل الطفل',tag:'medium',lv:4,wpmT:16},
+{t:'الدرس ٥٣ — جملة فعلية ٢',sub:'فعل وفاعل ومفعول',hint:'جمل أكثر اكتمالاً.',text:'قرأ الولد الكتاب شرب الطفل الماء',tag:'medium',lv:4,wpmT:15},
+{t:'الدرس ٥٤ — جمل الاستفهام',sub:'ما من أين كيف',hint:'اسأل بالعربية.',text:'ما اسمك؟ من أين أنت؟ كيف حالك؟',tag:'medium',lv:4,wpmT:15},
+{t:'الدرس ٥٥ — جمل النفي',sub:'لا لم ليس',hint:'النفي ضروري في كل لغة.',text:'لا أعرف لم أذهب ليس صحيحاً',tag:'medium',lv:4,wpmT:16},
+{t:'الدرس ٥٦ — البسملة',sub:'بسم الله الرحمن الرحيم',hint:'أكثر عبارة مكتوبة في التاريخ.',text:'بسم الله الرحمن الرحيم',tag:'medium',lv:4,wpmT:18},
+{t:'الدرس ٥٧ — الشهادتان',sub:'لا إله إلا الله',hint:'أهم جملة في الإسلام.',text:'لا إله إلا الله محمد رسول الله',tag:'medium',lv:4,wpmT:18},
+{t:'الدرس ٥٨ — سورة الفاتحة',sub:'الحمد لله رب العالمين',hint:'أول آية من سورة الفاتحة.',text:'الحمد لله رب العالمين الرحمن الرحيم',tag:'medium',lv:4,wpmT:15},
+{t:'الدرس ٥٩ — آية الكرسي',sub:'أعظم آية في القرآن',hint:'آية الكرسي — يحفظها كل مسلم.',text:'الله لا إله إلا هو الحي القيوم',tag:'hard',lv:4,wpmT:14},
+{t:'الدرس ٦٠ — حديث نبوي',sub:'إنما الأعمال بالنيات',hint:'من أشهر الأحاديث النبوية.',text:'إنما الأعمال بالنيات',tag:'easy',lv:4,wpmT:20},
+{t:'الدرس ٦١ — أمثال عربية',sub:'حكمة شعبية',hint:'أشهر الأمثال العربية.',text:'العلم نور والجهل ظلام',tag:'easy',lv:4,wpmT:20},
+{t:'الدرس ٦٢ — فقرة قصيرة',sub:'جملتان متصلتان',hint:'جملتان متصلتان — لا توقف.',text:'الكتاب خير جليس في كل زمان ومكان',tag:'medium',lv:4,wpmT:16},
+{t:'الدرس ٦٣ — البانجرام العربي',sub:'كل الحروف الـ ٢٨',hint:'الجملة الشاملة التي تحتوي على جميع الحروف العربية!',text:'نص حكيم له سر قاطع وذو شأن عظيم',tag:'hard',lv:4,wpmT:16},
+{t:'الدرس ٦٤ — فقرة متصلة',sub:'فقرة كاملة',hint:'فقرة كاملة — لا تتوقف.',text:'اللغة العربية لغة القرآن والحضارة والعلم',tag:'hard',lv:4,wpmT:15},
+{t:'الدرس ٦٥ — أرقام ونصوص',sub:'مزج الأرقام والكلمات',hint:'أرقام عربية مدمجة في نصوص.',text:'في عام ٢٠٢٤ بلغ عدد السكان ٨ مليارات',tag:'hard',lv:4,wpmT:13},
+{t:'الدرس ٦٦ — نص رسمي',sub:'كتابة رسمية',hint:'نص رسمي — أسلوب المراسلات.',text:'أخي الكريم أرجو قبول تحياتي واحترامي',tag:'hard',lv:4,wpmT:14},
+{t:'الدرس ٦٧ — تدريب السرعة ١',sub:'كلمات قصيرة بسرعة',hint:'أقصى سرعة مع الحفاظ على الدقة.',text:'من في على أن ما هذا إلى وقد كان',tag:'hard',lv:5,wpmT:22},
+{t:'الدرس ٦٨ — تدريب السرعة ٢',sub:'كلمات متوسطة',hint:'كلمات متوسطة الطول بسرعة.',text:'كتاب علم نور حكمة فهم عقل قلب',tag:'hard',lv:5,wpmT:20},
+{t:'الدرس ٦٩ — تدريب السرعة ٣',sub:'كلمات طويلة',hint:'كلمات طويلة — دقة أولاً ثم سرعة.',text:'المدرسة المسجد الحكومة الديمقراطية',tag:'hard',lv:5,wpmT:14},
+{t:'الدرس ٧٠ — تدريب الجمل',sub:'جمل كاملة بسرعة',hint:'جمل كاملة بإيقاع ثابت.',text:'العلم نور والجهل ظلام اطلب العلم',tag:'hard',lv:5,wpmT:18},
+{t:'الدرس ٧١ — فقرة ديوانية',sub:'نثر أدبي',hint:'نثر أدبي رفيع.',text:'في عالمنا الحديث أصبح العلم والتكنولوجيا ضرورة',tag:'hard',lv:5,wpmT:14},
+{t:'الدرس ٧٢ — شعر عربي',sub:'بيت من الشعر',hint:'شطر من بيت شعر عربي مشهور.',text:'لكل داء دواء يستطب به إلا الحماقة',tag:'hard',lv:5,wpmT:14},
+{t:'الدرس ٧٣ — مقولة مشهورة',sub:'حكمة عربية',hint:'مقولة أدبية مشهورة في التراث العربي.',text:'إذا كنت ذا رأي فكن ذا عزيمة',tag:'hard',lv:5,wpmT:15},
+{t:'الدرس ٧٤ — نص إخباري',sub:'أسلوب إخباري',hint:'النص الإخباري — مكثف وغني.',text:'أعلنت المنظمة عن نتائج الدراسة الجديدة',tag:'hard',lv:5,wpmT:14},
+{t:'الدرس ٧٥ — اطلب العلم',sub:'حديث العلم',hint:'حديث مشهور عن طلب العلم.',text:'اطلب العلم من المهد إلى اللحد',tag:'medium',lv:5,wpmT:16},
+{t:'الدرس ٧٦ — خبير: فقرة طويلة',sub:'أطول نص حتى الآن',hint:'فقرة طويلة — حافظ على الدقة.',text:'طلب العلم فريضة على كل مسلم ومسلمة في كل مكان',tag:'expert',lv:6,wpmT:14},
+{t:'الدرس ٧٧ — خبير: الفاتحة',sub:'سورة الفاتحة',hint:'الفاتحة — أكثر نص يُقرأ في التاريخ.',text:'الحمد لله رب العالمين الرحمن الرحيم مالك',tag:'expert',lv:6,wpmT:13},
+{t:'الدرس ٧٨ — خبير: نثر أدبي',sub:'نثر فصيح',hint:'أعلى مستويات الفصاحة.',text:'لا يزال العقل العربي يحمل في أعماقه روح الحضارة',tag:'expert',lv:6,wpmT:12},
+{t:'الدرس ٧٩ — خبير: ترقيم وأرقام',sub:'نص مختلط معقد',hint:'أرقام وترقيم وكلمات في نص واحد.',text:'في ٢٠٢٤م بلغت نسبة الأمية ٢ بالمئة في العالم العربي',tag:'expert',lv:6,wpmT:12},
+{t:'الدرس ٨٠ — خبير: رسالة رسمية',sub:'أسلوب المراسلات',hint:'رسالة رسمية — الأعلى في الكتابة.',text:'السيد المحترم أرجو الاطلاع على المرفقات',tag:'expert',lv:6,wpmT:12},
+{t:'الدرس ٨١ — خبير: سرعة قصوى ١',sub:'أقصى سرعة كلمات قصيرة',hint:'أقصى سرعة مع صفر أخطاء.',text:'في من على أن ما هذا إلى وقد كان له قل',tag:'expert',lv:6,wpmT:26},
+{t:'الدرس ٨٢ — خبير: سرعة قصوى ٢',sub:'أقصى سرعة جمل',hint:'جمل كاملة بأقصى سرعة.',text:'العلم نور والجهل ظلام من جد وجد',tag:'expert',lv:6,wpmT:22},
+{t:'الدرس ٨٣ — خبير: البانجرام مرتين',sub:'الجملة الشاملة مرتين',hint:'البانجرام العربي مرتين.',text:'نص حكيم له سر قاطع وذو شأن عظيم نص حكيم',tag:'expert',lv:6,wpmT:18},
+{t:'الدرس ٨٤ — خبير: آية قرآنية',sub:'نص قرآني كريم',hint:'نص قرآني مبارك.',text:'وقل ربي زدني علماً',tag:'expert',lv:6,wpmT:22},
+{t:'الدرس ٨٥ — خبير: نص تراثي',sub:'من التراث العربي',hint:'نص من التراث الأدبي العربي.',text:'خير الكلام ما قل ودل ولم يطل فيمل',tag:'expert',lv:6,wpmT:14},
+{t:'الدرس ٨٦ — خبير: تدريب مكثف ١',sub:'نص مكثف',hint:'نص مكثف بكلمات وجمل.',text:'العلم والعمل والإخلاص طريق النجاح',tag:'expert',lv:6,wpmT:16},
+{t:'الدرس ٨٧ — خبير: تدريب مكثف ٢',sub:'نص متنوع',hint:'تنوع كامل في المحتوى.',text:'من جد وجد ومن زرع حصد ومن طلب نال',tag:'expert',lv:6,wpmT:15},
+{t:'الدرس ٨٨ — خبير: حكمة وفلسفة',sub:'حكمة فلسفية',hint:'نص فلسفي — الأصعب أسلوباً.',text:'اعرف نفسك تعرف ربك وتعرف الناس',tag:'expert',lv:6,wpmT:16},
+{t:'الدرس ٨٩ — خبير: الكلمات الأصعب',sub:'أصعب الكلمات',hint:'أطول وأصعب الكلمات العربية.',text:'الاستراتيجية الديمقراطية الإيديولوجية',tag:'expert',lv:6,wpmT:10},
+{t:'الدرس ٩٠ — خبير: نص مطول ١',sub:'فقرة مطولة',hint:'أطول فقرة حتى الآن — ثبات كامل.',text:'يقول الإمام الشافعي من تعلم في صغره كالنقش في الحجر',tag:'expert',lv:6,wpmT:12},
+{t:'الدرس ٩١ — خبير: نص مطول ٢',sub:'فقرة مطولة ٢',hint:'فقرة طويلة أخرى — لا تتوقف.',text:'ليس الجمال بأثواب تزيننا إن الجمال جمال العلم والأدب',tag:'expert',lv:6,wpmT:12},
+{t:'الدرس ٩٢ — خبير: كل شيء معاً',sub:'النص المركب الأصعب',hint:'أرقام وحروف وجمل وترقيم — اختبار شامل.',text:'في ٢٠٢٤ بلغ عدد الناطقين بالعربية ٤٢٢ مليون نسمة',tag:'expert',lv:6,wpmT:12},
+{t:'الدرس ٩٣ — خبير: مراجعة الأبجدية',sub:'الأبجدية بسرعة',hint:'الأبجدية كاملة بأسرع ما يمكن.',text:'ا ب ت ث ج ح خ د ذ ر ز س ش ص ض ط ظ ع غ ف ق ك',tag:'expert',lv:6,wpmT:14},
+{t:'الدرس ٩٤ — خبير: ختام الحكمة',sub:'خلاصة الحكمة',hint:'نصوص حكمية بتركيز كامل.',text:'اقرأ باسم ربك الذي خلق',tag:'expert',lv:6,wpmT:20},
+{t:'الدرس ٩٥ — خبير: الأحرف النادرة',sub:'حروف نادرة الاستخدام',hint:'الحروف الأقل شيوعاً — تدريب مكثف.',text:'ظظ غغ ذذ ثث خخ ضض طط ظغ ذث',tag:'expert',lv:6,wpmT:12},
+{t:'الدرس ٩٦ — خبير: نص شعري',sub:'بيت شعر كامل',hint:'بيت شعر عربي كلاسيكي.',text:'تعلم فليس المرء يولد عالماً وليس أخو علم كمن هو جاهل',tag:'expert',lv:6,wpmT:11},
+{t:'الدرس ٩٧ — خبير: نص ديني',sub:'نص ديني مطول',hint:'نص ديني بتركيز عالٍ.',text:'سبحان الله والحمد لله ولا إله إلا الله والله أكبر',tag:'expert',lv:6,wpmT:14},
+{t:'الدرس ٩٨ — خبير: البانجرام الأصعب',sub:'كل الحروف ثلاث مرات',hint:'الاختبار النهائي للحروف.',text:'نص حكيم له سر قاطع وذو شأن عظيم نص حكيم له سر',tag:'expert',lv:6,wpmT:16},
+{t:'الدرس ٩٩ — خبير: النص الأصعب',sub:'أصعب نص في المجموعة',hint:'النص الأطول والأصعب.',text:'من أراد الدنيا فعليه بالعلم ومن أراد الآخرة فعليه بالعلم',tag:'expert',lv:6,wpmT:12},
+{t:'الدرس ١٠٠ — الختام الأسطوري',sub:'النهاية العظيمة',hint:'لقد أتممت جميع الدروس! أعطِ هذا الدرس كل ما لديك!',text:'بسم الله الرحمن الرحيم الحمد لله رب العالمين نص حكيم',tag:'expert',lv:6,wpmT:14}
+],
+ur:[
+{t:'سبق ١ — الف',sub:'ا',hint:'پہلا حرف — الف',text:'ا ا ا ا ا ا ا ا ا ا ا ا',tag:'easy',lv:0,wpmT:8},
+{t:'سبق ٢ — ب پ ت',sub:'ب پ ت',hint:'ب پ ت آوازیں مختلف',text:'ب پ ت ب پ ت ب ب پ پ ت ت',tag:'easy',lv:0,wpmT:8},
+{t:'سبق ٣ — ٹ ث ج',sub:'ٹ ث ج',hint:'ٹ اردو کا مخصوص حرف',text:'ٹ ث ج ٹ ث ج ٹ ٹ ث ث ج ج',tag:'easy',lv:0,wpmT:8},
+{t:'سبق ٤ — چ ح خ',sub:'چ ح خ',hint:'چ اردو کا مخصوص حرف',text:'چ ح خ چ ح خ چ چ ح ح خ خ',tag:'easy',lv:0,wpmT:8},
+{t:'سبق ٥ — د ڈ ذ',sub:'د ڈ ذ',hint:'ڈ اردو کا مخصوص حرف',text:'د ڈ ذ د ڈ ذ د د ڈ ڈ ذ ذ',tag:'easy',lv:0,wpmT:8},
+{t:'سبق ٦ — ر ڑ ز',sub:'ر ڑ ز',hint:'ڑ اردو کا مخصوص حرف',text:'ر ڑ ز ر ڑ ز ر ر ڑ ڑ ز ز',tag:'easy',lv:0,wpmT:8},
+{t:'سبق ٧ — ژ س ش',sub:'ژ س ش',hint:'ژ مستعار الفاظ میں',text:'ژ س ش ژ س ش ژ ژ س س ش ش',tag:'easy',lv:0,wpmT:8},
+{t:'سبق ٨ — ص ض ط',sub:'ص ض ط',hint:'عربی سے آئے حروف',text:'ص ض ط ص ض ط ص ص ض ض ط ط',tag:'easy',lv:0,wpmT:8},
+{t:'سبق ٩ — ظ ع غ',sub:'ظ ع غ',hint:'گلے کی آوازیں',text:'ظ ع غ ظ ع غ ظ ظ ع ع غ غ',tag:'easy',lv:0,wpmT:8},
+{t:'سبق ١٠ — ف ق ک',sub:'ف ق ک',hint:'ک اردو کی مخصوص شکل',text:'ف ق ک ف ق ک ف ف ق ق ک ک',tag:'easy',lv:0,wpmT:8},
+{t:'سبق ١١ — گ ل م',sub:'گ ل م',hint:'گ اردو کا مخصوص حرف',text:'گ ل م گ ل م گ گ ل ل م م',tag:'easy',lv:0,wpmT:8},
+{t:'سبق ١٢ — ن و ہ',sub:'ن و ہ',hint:'ہ اردو کی مخصوص شکل',text:'ن و ہ ن و ہ ن ن و و ہ ہ',tag:'easy',lv:0,wpmT:8},
+{t:'سبق ١٣ — ی ے',sub:'ی ے',hint:'ے صرف لفظ کے آخر میں',text:'ی ے ی ے ی ے ی ی ے ے',tag:'easy',lv:0,wpmT:8},
+{t:'سبق ١٤ — ہمزہ اقسام',sub:'ء ئ ؤ',hint:'ہمزہ کی تین اقسام',text:'ء ئ ؤ ء ئ ؤ ء ء ئ ئ',tag:'easy',lv:0,wpmT:8},
+{t:'سبق ١٥ — اردو ابجد مکمل',sub:'سب حروف',hint:'تمام اردو حروف تہجی',text:'ا ب پ ت ٹ ث ج چ ح خ د ڈ ذ ر ڑ ز',tag:'easy',lv:0,wpmT:8},
+{t:'سبق ١٦ — ملتے جلتے حروف',sub:'ب پ ت ٹ',hint:'نقطوں کا فرق',text:'ب پ ت ٹ بپ تٹ پب ٹت',tag:'easy',lv:1,wpmT:10},
+{t:'سبق ١٧ — بنیادی الفاظ ١',sub:'عام الفاظ',hint:'سب سے زیادہ استعمال ہونے والے الفاظ',text:'ہاں نہیں شکریہ سلام پانی گھر',tag:'easy',lv:1,wpmT:14},
+{t:'سبق ١٨ — خاندانی الفاظ',sub:'گھر اور خاندان',hint:'خاندان کے افراد کے نام',text:'ماں باپ بھائی بہن بچہ گھر دادا',tag:'easy',lv:1,wpmT:15},
+{t:'سبق ١٩ — رنگ',sub:'رنگوں کے نام',hint:'بنیادی رنگوں کے اردو نام',text:'سرخ نیلا سبز پیلا سفید کالا',tag:'easy',lv:1,wpmT:16},
+{t:'سبق ٢٠ — گنتی',sub:'ایک سے دس',hint:'اردو میں گنتی',text:'ایک دو تین چار پانچ چھ سات آٹھ',tag:'easy',lv:1,wpmT:15},
+{t:'سبق ٢١ — وقت',sub:'صبح دوپہر شام',hint:'وقت اور دن کے الفاظ',text:'صبح دوپہر شام رات سوموار منگل',tag:'medium',lv:1,wpmT:14},
+{t:'سبق ٢٢ — کھانا',sub:'کھانے کے نام',hint:'خوراک اور مشروبات کے الفاظ',text:'روٹی چاول دال سبزی چائے دودھ',tag:'easy',lv:1,wpmT:16},
+{t:'سبق ٢٣ — جانور',sub:'جانوروں کے نام',hint:'جانوروں کے اردو نام',text:'شیر ہاتھی گھوڑا اونٹ بکری مرغی',tag:'easy',lv:1,wpmT:16},
+{t:'سبق ٢٤ — صفات',sub:'وصفی الفاظ',hint:'چیزوں کو بیان کرنے والے الفاظ',text:'بڑا چھوٹا لمبا موٹا خوبصورت اچھا',tag:'medium',lv:1,wpmT:14},
+{t:'سبق ٢٥ — پیشے',sub:'کام اور پیشے',hint:'مختلف پیشوں کے اردو نام',text:'ڈاکٹر استاد انجینئر وکیل کسان',tag:'medium',lv:1,wpmT:14},
+{t:'سبق ٢٦ — ملبوسات',sub:'لباس کے نام',hint:'پہناوے کے اردو الفاظ',text:'قمیض شلوار کرتہ جوتے ٹوپی چادر',tag:'easy',lv:1,wpmT:16},
+{t:'سبق ٢٧ — اسکول',sub:'تعلیمی الفاظ',hint:'تعلیم اور اسکول سے متعلق الفاظ',text:'کلاس استاد طالب علم سبق امتحان',tag:'easy',lv:1,wpmT:15},
+{t:'سبق ٢٨ — جانور اور فطرت',sub:'فطرت کے الفاظ',hint:'فطرت کے اردو الفاظ',text:'سمندر پہاڑ دریا میدان جنگل',tag:'medium',lv:1,wpmT:14},
+{t:'سبق ٢٩ — پھول اور رنگ',sub:'پھولوں کے نام',hint:'پھولوں کے اردو نام',text:'گلاب چمیلی موتیا سورج مکھی',tag:'easy',lv:1,wpmT:14},
+{t:'سبق ٣٠ — موسم',sub:'موسموں کے نام',hint:'موسم کے اردو الفاظ',text:'گرمی سردی بارش خزاں بہار',tag:'easy',lv:1,wpmT:16},
+{t:'سبق ٣١ — کھیل',sub:'کھیلوں کے نام',hint:'کھیلوں کے اردو نام',text:'کرکٹ فٹ بال ہاکی کبڈی',tag:'easy',lv:1,wpmT:16},
+{t:'سبق ٣٢ — مشاغل',sub:'شوق اور مشاغل',hint:'مشاغل کے اردو الفاظ',text:'پڑھنا لکھنا تیرنا دوڑنا پکانا',tag:'medium',lv:1,wpmT:14},
+{t:'سبق ٣٣ — السلام علیکم',sub:'اسلامی سلام',hint:'سب سے عام اسلامی سلام',text:'السلام علیکم وعلیکم السلام',tag:'easy',lv:2,wpmT:15},
+{t:'سبق ٣٤ — پہلا جملہ',sub:'مکمل جملہ',hint:'پہلا مکمل اردو جملہ',text:'میرا نام احمد ہے اور میں طالب علم ہوں',tag:'medium',lv:2,wpmT:14},
+{t:'سبق ٣٥ — سوالیہ جملے',sub:'سوالات',hint:'اردو میں سوال کرنا',text:'آپ کا نام کیا ہے؟ آپ کہاں رہتے ہیں؟',tag:'medium',lv:2,wpmT:14},
+{t:'سبق ٣٦ — روزمرہ جملے',sub:'عام جملے',hint:'روزانہ بولے جانے والے جملے',text:'میں اردو سیکھ رہا ہوں یہ بہت اچھا ہے',tag:'medium',lv:2,wpmT:14},
+{t:'سبق ٣٧ — بسم اللہ',sub:'ہر کام کی ابتدا',hint:'ہر اہم کام سے پہلے',text:'بسم اللہ الرحمن الرحیم',tag:'medium',lv:2,wpmT:16},
+{t:'سبق ٣٨ — منفی جملے',sub:'نہیں مت',hint:'اردو میں انکار کرنا',text:'نہیں مجھے نہیں پتہ وہ نہیں آیا',tag:'medium',lv:2,wpmT:15},
+{t:'سبق ٣٩ — اقوال',sub:'مشہور اقوال',hint:'اردو کے مشہور اقوال زریں',text:'علم حاصل کرو چاہے چین جانا پڑے',tag:'hard',lv:2,wpmT:13},
+{t:'سبق ٤٠ — پاکستان جملے',sub:'پاکستان کے بارے میں',hint:'پاکستان کے بارے میں جملے',text:'پاکستان ایک خوبصورت ملک ہے',tag:'medium',lv:2,wpmT:15},
+{t:'سبق ٤١ — خاندانی جملے',sub:'گھر کے جملے',hint:'گھریلو گفتگو کے جملے',text:'ماں نے کھانا بنایا باپ کام سے آئے',tag:'medium',lv:2,wpmT:13},
+{t:'سبق ٤٢ — تعریفی جملے',sub:'تعریف کرنا',hint:'کسی چیز کی تعریف کرنا',text:'یہ گھر بہت خوبصورت ہے',tag:'medium',lv:2,wpmT:15},
+{t:'سبق ٤٣ — پیغام',sub:'پیغام لکھنا',hint:'مکمل پیغام لکھنا',text:'آپ کا بہت شکریہ ہے کل ملتے ہیں',tag:'medium',lv:2,wpmT:15},
+{t:'سبق ٤٤ — ملکی جملے',sub:'پاکستان',hint:'پاکستان نیشنل الفاظ',text:'پاکستان کی قومی زبان اردو ہے',tag:'medium',lv:2,wpmT:15},
+{t:'سبق ٤٥ — زبان کے جملے',sub:'اردو کی عظمت',hint:'اردو زبان کے بارے میں',text:'اردو میٹھی اور خوبصورت زبان ہے',tag:'easy',lv:2,wpmT:16},
+{t:'سبق ٤٦ — فقرہ ١',sub:'دو جملے ملا کر',hint:'دو جملے بلا توقف',text:'میں روز پڑھتا ہوں پڑھنے سے علم ملتا ہے',tag:'medium',lv:2,wpmT:13},
+{t:'سبق ٤٧ — فقرہ ٢',sub:'لمبا جملہ',hint:'لمبا اردو جملہ',text:'اردو دنیا کی خوبصورت ترین زبانوں میں سے ایک ہے',tag:'hard',lv:2,wpmT:12},
+{t:'سبق ٤٨ — خط کا آغاز',sub:'خط لکھنا',hint:'رسمی خط کا آغاز',text:'محترم جناب السلام علیکم امید ہے',tag:'medium',lv:2,wpmT:13},
+{t:'سبق ٤٩ — خط کا اختتام',sub:'خط کا آخر',hint:'رسمی خط کا اختتامی حصہ',text:'آپ کا مخلص احمد خان سلامت',tag:'medium',lv:2,wpmT:15},
+{t:'سبق ٥٠ — اعداد اور الفاظ',sub:'مختلط نصوص',hint:'اعداد اور الفاظ ایک ساتھ',text:'پاکستان میں ٢٢ کروڑ سے زیادہ لوگ ہیں',tag:'hard',lv:2,wpmT:12},
+{t:'سبق ٥١ — اقبال ١',sub:'شاعر مشرق',hint:'علامہ اقبال کا مشہور شعر',text:'یقین محکم عمل پیہم محبت فاتح عالم',tag:'hard',lv:3,wpmT:13},
+{t:'سبق ٥٢ — اقبال ٢',sub:'شاہین کا شعر',hint:'اقبال کا شاہین والا شعر',text:'پرواز ہے دونوں کی اسی ایک فضا میں',tag:'hard',lv:3,wpmT:12},
+{t:'سبق ٥٣ — غالب ١',sub:'دیوان غالب',hint:'مرزا غالب کا مشہور شعر',text:'ہزاروں خواہشیں ایسی کہ ہر خواہش پہ دم نکلے',tag:'hard',lv:3,wpmT:11},
+{t:'سبق ٥٤ — غالب ٢',sub:'غالب کا دوسرا شعر',hint:'غالب کا ایک اور مشہور مصرع',text:'دل ڈھونڈتا ہے پھر وہی فرصت کے رات دن',tag:'expert',lv:3,wpmT:11},
+{t:'سبق ٥٥ — فیض ١',sub:'فیض احمد فیض',hint:'فیض کی مشہور نظم',text:'ہم دیکھیں گے لازم ہے کہ ہم بھی دیکھیں گے',tag:'hard',lv:3,wpmT:12},
+{t:'سبق ٥٦ — فیض ٢',sub:'مجھ سے پہلی سی',hint:'فیض کی مشہور نظم کا مصرع',text:'مجھ سے پہلی سی محبت مری محبوب نہ مانگ',tag:'expert',lv:3,wpmT:11},
+{t:'سبق ٥٧ — قومی ترانہ',sub:'پاکستان زندہ باد',hint:'قومی ترانے کی شروعات',text:'پاک سرزمین شاد باد کشور حسین شاد باد',tag:'hard',lv:3,wpmT:13},
+{t:'سبق ٥٨ — میر تقی میر',sub:'میر صاحب کا شعر',hint:'میر تقی میر کا مشہور شعر',text:'میر ان نیم باز آنکھوں میں ساری مستی شراب کی',tag:'expert',lv:3,wpmT:11},
+{t:'سبق ٥٩ — پروین شاکر',sub:'پروین کا شعر',hint:'پروین شاکر کا مشہور شعر',text:'خوشبو کا سفر ہوتا ہے جیسے ہوا میں',tag:'hard',lv:3,wpmT:13},
+{t:'سبق ٦٠ — ضرب الامثال',sub:'مشہور کہاوتیں',hint:'اردو کی مشہور کہاوتیں',text:'جیسا کرو گے ویسا بھرو گے',tag:'medium',lv:3,wpmT:15},
+{t:'سبق ٦١ — ادبی نثر ١',sub:'ادبی اسلوب',hint:'اعلی ادبی اسلوب',text:'اردو ادب میں غزل کا مقام سب سے اعلی ہے',tag:'expert',lv:3,wpmT:13},
+{t:'سبق ٦٢ — ادبی نثر ٢',sub:'فکری عبارت',hint:'فکری اور ادبی عبارت',text:'انسان کی سوچ اس کے الفاظ میں جھلکتی ہے',tag:'expert',lv:3,wpmT:12},
+{t:'سبق ٦٣ — شاعری کا رس',sub:'شاعری کے خوبصورت الفاظ',hint:'اردو شاعری کے الفاظ',text:'چاندنی آسمان ستارے خواب جدائی وصل',tag:'hard',lv:3,wpmT:13},
+{t:'سبق ٦٤ — علمی الفاظ',sub:'علمی الفاظ',hint:'علم اور فکر کے الفاظ',text:'فلسفہ نفسیات معاشرہ تہذیب ثقافت',tag:'hard',lv:3,wpmT:12},
+{t:'سبق ٦٥ — سیاسی الفاظ',sub:'سیاسی اصطلاحات',hint:'سیاسی اصطلاحات اردو میں',text:'جمہوریت انتخابات پارلیمنٹ آئین',tag:'hard',lv:3,wpmT:12},
+{t:'سبق ٦٦ — صحت کے الفاظ',sub:'طبی اصطلاحات',hint:'صحت اور طب کے الفاظ',text:'صحت بیماری علاج دوائی ہسپتال',tag:'medium',lv:3,wpmT:14},
+{t:'سبق ٦٧ — تاریخی عبارت',sub:'تاریخی موضوع',hint:'تاریخی عبارت',text:'١٤ اگست ١٩٤٧ کو پاکستان معرض وجود میں آیا',tag:'expert',lv:3,wpmT:12},
+{t:'سبق ٦٨ — اردو کا جادو',sub:'اردو کی خوبصورتی',hint:'اردو کی خوبصورتی کا اظہار',text:'اردو کے الفاظ میں ایک خاص کشش اور لطافت ہے',tag:'expert',lv:3,wpmT:12},
+{t:'سبق ٦٩ — رفتار مشق ١',sub:'چھوٹے الفاظ تیز',hint:'زیادہ سے زیادہ رفتار',text:'ہاں نہیں ہے تھا کیا یہ وہ اور',tag:'medium',lv:4,wpmT:20},
+{t:'سبق ٧٠ — رفتار مشق ٢',sub:'درمیانہ الفاظ',hint:'درمیانے الفاظ تیزی سے',text:'کتاب علم دانش فہم حکمت عقل خرد',tag:'hard',lv:4,wpmT:18},
+{t:'سبق ٧١ — رفتار مشق ٣',sub:'لمبے الفاظ',hint:'لمبے الفاظ پہلے درستگی',text:'خوبصورت دانشمندانہ محبت آمیز',tag:'hard',lv:4,wpmT:14},
+{t:'سبق ٧٢ — رفتار مشق ٤',sub:'جملے تیزی سے',hint:'مکمل جملے بغیر رکے',text:'میں پڑھتا ہوں وہ لکھتا ہے ہم سیکھتے ہیں',tag:'hard',lv:4,wpmT:16},
+{t:'سبق ٧٣ — رفتار مشق ٥',sub:'شعر تیزی سے',hint:'شعر کا مصرعہ بہترین رفتار',text:'یقین محکم عمل پیہم محبت فاتح عالم',tag:'hard',lv:4,wpmT:15},
+{t:'سبق ٧٤ — رفتار مشق ٦',sub:'فقرہ رفتار',hint:'دو جملے بلا توقف',text:'اردو ایک خوبصورت زبان ہے جو دل کو چھوتی ہے',tag:'hard',lv:4,wpmT:15},
+{t:'سبق ٧٥ — رفتار مشق ٧',sub:'مشہور الفاظ',hint:'مشہور اردو الفاظ رفتار سے',text:'محبت دوستی وفا ایمان امید خوشی',tag:'hard',lv:4,wpmT:18},
+{t:'سبق ٧٦ — رفتار مشق ٨',sub:'ادبی الفاظ',hint:'ادبی الفاظ تیزی سے',text:'شاعری ادب نثر غزل نظم قصیدہ',tag:'hard',lv:4,wpmT:16},
+{t:'سبق ٧٧ — رفتار مشق ٩',sub:'روزمرہ الفاظ تیز',hint:'روزمرہ الفاظ اعلی رفتار',text:'گھر اسکول دفتر بازار مسجد پارک',tag:'medium',lv:4,wpmT:18},
+{t:'سبق ٧٨ — رفتار مشق ١٠',sub:'اعداد الفاظ',hint:'اعداد اور الفاظ مل کر',text:'ایک دو تین چار پانچ چھ سات آٹھ',tag:'medium',lv:4,wpmT:18},
+{t:'سبق ٧٩ — خبر نامہ',sub:'خبری اسلوب',hint:'اخباری اسلوب مختصر اور جامع',text:'حکومت نے نئی پالیسی کا اعلان کیا',tag:'hard',lv:5,wpmT:14},
+{t:'سبق ٨٠ — تعلیمی مضمون',sub:'تعلیمی اسلوب',hint:'تعلیمی مضمون کا آغاز',text:'تعلیم ہر انسان کا بنیادی حق ہے',tag:'hard',lv:5,wpmT:16},
+{t:'سبق ٨١ — فلسفیانہ',sub:'فلسفیانہ جملہ',hint:'فلسفیانہ سوچ کا اظہار',text:'زندگی ایک سفر ہے جس کی منزل موت ہے',tag:'expert',lv:5,wpmT:14},
+{t:'سبق ٨٢ — مذہبی',sub:'دینی جملے',hint:'دینی موضوعات',text:'نماز دین کا ستون ہے روزہ ڈھال ہے',tag:'hard',lv:5,wpmT:15},
+{t:'سبق ٨٣ — ماہر: مشکل فقرہ',sub:'مشکل فقرہ',hint:'پوری توجہ چاہیے',text:'پاکستان کی قومی زبان اردو ہے اور اس کا ادب بہت غنی ہے',tag:'expert',lv:6,wpmT:12},
+{t:'سبق ٨٤ — ماہر: ہر قسم',sub:'ہر قسم ایک ساتھ',hint:'الفاظ اعداد جملے سب',text:'٢٠٢٤ میں پاکستان نے ١٠ فیصد ترقی کا ہدف رکھا',tag:'expert',lv:6,wpmT:12},
+{t:'سبق ٨٥ — ماہر: لمبا متن',sub:'لمبا متن',hint:'سب سے لمبا متن',text:'اردو زبان کی تاریخ پرانی ہے اور اس نے ہندوستان میں جنم لیا',tag:'expert',lv:6,wpmT:11},
+{t:'سبق ٨٦ — ماہر: غزل کا شعر',sub:'غزل',hint:'مکمل شعر دونوں مصرعے',text:'دیار عشق میں اپنا مقام پیدا کر نیا زمانہ نئے صبح شام',tag:'expert',lv:6,wpmT:11},
+{t:'سبق ٨٧ — ماہر: رفتار ١',sub:'ماہرانہ رفتار الفاظ',hint:'صفر غلطیاں',text:'ہاں نہیں ہے کیا اور یہ وہ ہم تم آپ',tag:'expert',lv:6,wpmT:28},
+{t:'سبق ٨٨ — ماہر: رفتار ٢',sub:'جملے ماہرانہ',hint:'جملے اعلی رفتار',text:'میں پڑھتا ہوں وہ لکھتا ہے آپ سیکھتے ہیں',tag:'expert',lv:6,wpmT:20},
+{t:'سبق ٨٩ — مکمل اقبال',sub:'اقبال کا مکمل شعر',hint:'اقبال کا مکمل شعر',text:'یقین محکم عمل پیہم محبت فاتح عالم جہاد زندگانی میں ہے',tag:'expert',lv:6,wpmT:11},
+{t:'سبق ٩٠ — ادب و سائنس',sub:'ادب اور سائنس',hint:'ادبی اور سائنسی الفاظ',text:'سائنس اور ادب دونوں انسانی ترقی کے ستون ہیں',tag:'expert',lv:6,wpmT:13},
+{t:'سبق ٩١ — اردو کا مقام',sub:'قومی زبان کا مقام',hint:'قومی زبان',text:'اردو پاکستان کی شناخت اور وقار کی علامت ہے',tag:'expert',lv:6,wpmT:12},
+{t:'سبق ٩٢ — ادبی سرمایہ',sub:'اردو کا ادب',hint:'اردو ادب',text:'اردو ادب میں غالب اقبال اور فیض کا نام ہمیشہ رہے گا',tag:'expert',lv:6,wpmT:11},
+{t:'سبق ٩٣ — مشکل ترین الفاظ',sub:'اردو کے مشکل الفاظ',hint:'سب سے مشکل الفاظ',text:'استخوان استفسار استعمال استقبال',tag:'expert',lv:6,wpmT:11},
+{t:'سبق ٩٤ — حتمی رفتار ١',sub:'آخری رفتار امتحان',hint:'اپنی حد جانیں',text:'ہاں نہیں کیا وہ یہ میں تم آپ ہم',tag:'expert',lv:6,wpmT:32},
+{t:'سبق ٩٥ — حتمی رفتار ٢',sub:'جملے حتمی رفتار',hint:'آخری رفتار پر',text:'پڑھنا لکھنا سیکھنا ضروری ہے',tag:'expert',lv:6,wpmT:20},
+{t:'سبق ٩٦ — حتمی مشق ١',sub:'چیلنجنگ متن',hint:'سب سے چیلنجنگ',text:'اردو میں ٧٠ کروڑ لوگ بات کرتے ہیں',tag:'expert',lv:6,wpmT:12},
+{t:'سبق ٩٧ — حتمی مشق ٢',sub:'آخری بڑا چیلنج',hint:'سب دیں',text:'محنت صبر اور لگن سے ہر کام ممکن ہے',tag:'expert',lv:6,wpmT:13},
+{t:'سبق ٩٨ — مشکل متن',sub:'نہایت مشکل',hint:'اعداد نص علامات',text:'٢٠٢٤ میں اردو بولنے والوں کی تعداد ٧٠ کروڑ ہے',tag:'expert',lv:6,wpmT:12},
+{t:'سبق ٩٩ — آخری حربہ',sub:'تمام مشکلات',hint:'ہر قسم کی مشکل',text:'٢٢ کروڑ لوگوں کی زبان اردو اس کا ادب لازوال ہے',tag:'expert',lv:6,wpmT:11},
+{t:'سبق ١٠٠ — عظیم اختتام',sub:'آخری سبق',hint:'مبارک ہو! پوری طاقت لگائیں',text:'محنت اور لگن سے کوئی بھی مقصد حاصل کیا جا سکتا ہے',tag:'expert',lv:6,wpmT:13}
+],
+bn:[
+{t:'পাঠ ১ — অ',sub:'প্রথম স্বরবর্ণ',hint:'শুধু অ — প্রথম অক্ষর',text:'অ অ অ অ অ অ অ অ অ অ',tag:'easy',lv:0,wpmT:8},
+{t:'পাঠ ২ — আ ই ঈ',sub:'পরের তিন স্বর',hint:'আ ই ঈ — দীর্ঘ ও হ্রস্ব',text:'আ ই ঈ আ ই ঈ আ আ ই ই',tag:'easy',lv:0,wpmT:8},
+{t:'পাঠ ৩ — উ ঊ এ',sub:'আরও তিন স্বর',hint:'উ ঊ এ — গুরুত্বপূর্ণ স্বর',text:'উ ঊ এ উ ঊ এ উ উ ঊ ঊ',tag:'easy',lv:0,wpmT:8},
+{t:'পাঠ ৪ — ঐ ও ঔ',sub:'বাকি স্বর',hint:'ঐ ও ঔ — শেষ স্বর দল',text:'ঐ ও ঔ ঐ ও ঔ ঐ ঐ ও ও',tag:'easy',lv:0,wpmT:8},
+{t:'পাঠ ৫ — সব স্বর',sub:'১১টি স্বরবর্ণ',hint:'সব ১১টি স্বরবর্ণ',text:'অ আ ই ঈ উ ঊ এ ঐ ও ঔ',tag:'easy',lv:0,wpmT:8},
+{t:'পাঠ ৬ — ক খ গ ঘ',sub:'ক-বর্গ',hint:'প্রথম ব্যঞ্জনবর্গ',text:'ক খ গ ঘ ক খ গ ঘ ক ক',tag:'easy',lv:0,wpmT:8},
+{t:'পাঠ ৭ — চ ছ জ ঝ',sub:'চ-বর্গ',hint:'দ্বিতীয় ব্যঞ্জনবর্গ',text:'চ ছ জ ঝ চ ছ জ ঝ চ চ',tag:'easy',lv:0,wpmT:8},
+{t:'পাঠ ৮ — ট ঠ ড ঢ ণ',sub:'ট-বর্গ',hint:'মূর্ধন্য বর্ণ',text:'ট ঠ ড ঢ ণ ট ঠ ড ঢ',tag:'easy',lv:0,wpmT:8},
+{t:'পাঠ ৯ — ত থ দ ধ ন',sub:'ত-বর্গ',hint:'দন্ত্য বর্ণ',text:'ত থ দ ধ ন ত থ দ ধ',tag:'easy',lv:0,wpmT:8},
+{t:'পাঠ ১০ — প ফ ব ভ ম',sub:'প-বর্গ',hint:'ওষ্ঠ্য বর্ণ',text:'প ফ ব ভ ম প ফ ব ভ',tag:'easy',lv:0,wpmT:8},
+{t:'পাঠ ১১ — য র ল শ স হ',sub:'উষ্মবর্ণ',hint:'বাকি ব্যঞ্জনবর্ণ',text:'য র ল শ স হ য র ল',tag:'easy',lv:0,wpmT:8},
+{t:'পাঠ ১২ — সব ব্যঞ্জন',sub:'সব ব্যঞ্জনবর্ণ',hint:'সব একসাথে',text:'ক খ গ চ জ ট ড ত দ ন প ব ম য র',tag:'easy',lv:0,wpmT:8},
+{t:'পাঠ ১৩ — হোম রো',sub:'আ স দ ফ গ হ জ খ',hint:'কিবোর্ডের মাঝের সারি',text:'আস দফ গহ জখ আস দফ',tag:'easy',lv:1,wpmT:12},
+{t:'পাঠ ১৪ — বাংলা সংখ্যা',sub:'০–৯',hint:'বাংলা অঙ্ক',text:'০ ১ ২ ৩ ৪ ৫ ৬ ৭ ৮ ৯',tag:'easy',lv:1,wpmT:12},
+{t:'পাঠ ১৫ — সাধারণ শব্দ',sub:'হ্যাঁ না ধন্যবাদ',hint:'সবচেয়ে বেশি ব্যবহৃত শব্দ',text:'হ্যাঁ না ধন্যবাদ সালাম পানি ঘর',tag:'easy',lv:1,wpmT:14},
+{t:'পাঠ ১৬ — পরিবার',sub:'মা বাবা ভাই',hint:'পরিবারের সদস্যদের নাম',text:'মা বাবা ভাই বোন ছেলে মেয়ে দাদা',tag:'easy',lv:1,wpmT:16},
+{t:'পাঠ ১৭ — রং',sub:'লাল নীল সবুজ',hint:'রঙের বাংলা নাম',text:'লাল নীল সবুজ হলুদ সাদা কালো',tag:'easy',lv:1,wpmT:16},
+{t:'পাঠ ১৮ — খাবার',sub:'ভাত মাছ',hint:'বাংলা খাবারের নাম',text:'ভাত ডাল মাছ মাংস শাক তরকারি',tag:'easy',lv:1,wpmT:16},
+{t:'পাঠ ১৯ — শহর',sub:'বাংলাদেশের শহর',hint:'বড় শহরের নাম',text:'ঢাকা চট্টগ্রাম সিলেট রাজশাহী',tag:'medium',lv:1,wpmT:14},
+{t:'পাঠ ২০ — দিন ও সময়',sub:'সকাল দুপুর রাত',hint:'সময়ের শব্দ',text:'সকাল দুপুর বিকাল রাত দিন সপ্তাহ',tag:'easy',lv:1,wpmT:16},
+{t:'পাঠ ২১ — প্রাণী',sub:'বাঘ হাতি হরিণ',hint:'বাংলার প্রাণী',text:'বাঘ হাতি হরিণ ময়ূর কাক ইলিশ',tag:'easy',lv:1,wpmT:16},
+{t:'পাঠ ২২ — পেশা',sub:'ডাক্তার শিক্ষক',hint:'পেশার বাংলা নাম',text:'ডাক্তার শিক্ষক প্রকৌশলী কৃষক',tag:'medium',lv:1,wpmT:14},
+{t:'পাঠ ২৩ — শরীর',sub:'মাথা চোখ নাক',hint:'শরীরের অঙ্গের নাম',text:'মাথা চোখ নাক কান মুখ হাত পা',tag:'easy',lv:1,wpmT:16},
+{t:'পাঠ ২৪ — ঋতু',sub:'গ্রীষ্ম বর্ষা শীত',hint:'বাংলার ষড়ঋতু',text:'গ্রীষ্ম বর্ষা শরৎ হেমন্ত শীত বসন্ত',tag:'easy',lv:1,wpmT:14},
+{t:'পাঠ ২৫ — সংখ্যা শব্দে',sub:'এক থেকে দশ',hint:'সংখ্যা শব্দে',text:'এক দুই তিন চার পাঁচ ছয় সাত আট',tag:'easy',lv:1,wpmT:15},
+{t:'পাঠ ২৬ — বিদ্যালয়',sub:'স্কুলের শব্দ',hint:'শিক্ষা সংক্রান্ত শব্দ',text:'স্কুল শিক্ষক পড়া লেখা পরীক্ষা বই',tag:'easy',lv:1,wpmT:15},
+{t:'পাঠ ২৭ — মিশ্র শব্দ',sub:'বিভিন্ন বিষয়',hint:'বিভিন্ন বিষয়ের শব্দ',text:'সমুদ্র পাহাড় নদী মাঠ জঙ্গল',tag:'medium',lv:1,wpmT:14},
+{t:'পাঠ ২৮ — ফুল ও ফল',sub:'বাংলার ফুল ফল',hint:'ফুল ও ফলের নাম',text:'শাপলা কদম বকুল আম কাঁঠাল লিচু',tag:'easy',lv:1,wpmT:14},
+{t:'পাঠ ২৯ — নদীর নাম',sub:'পদ্মা মেঘনা যমুনা',hint:'বাংলাদেশের প্রধান নদী',text:'পদ্মা মেঘনা যমুনা ব্রহ্মপুত্র',tag:'hard',lv:1,wpmT:13},
+{t:'পাঠ ৩০ — কৃষি',sub:'কৃষি প্রধান দেশ',hint:'বাংলাদেশের কৃষি',text:'ধান পাট চা রাবার প্রধান ফসল',tag:'medium',lv:1,wpmT:14},
+{t:'পাঠ ৩১ — প্রথম বাক্য',sub:'সহজ বাক্য',hint:'প্রথম বাংলা বাক্য',text:'আমার নাম বাংলাদেশ আমি বাংলায় কথা বলি',tag:'medium',lv:2,wpmT:14},
+{t:'পাঠ ৩২ — প্রশ্নবোধক',sub:'প্রশ্নের বাক্য',hint:'বাংলায় প্রশ্ন করা',text:'তোমার নাম কী? তুমি কোথায় থাকো?',tag:'medium',lv:2,wpmT:14},
+{t:'পাঠ ৩৩ — পরিচয়',sub:'নিজের পরিচয়',hint:'নিজের পরিচয় দেওয়া',text:'আমি বাংলাদেশী আমি বাংলা শিখছি',tag:'medium',lv:2,wpmT:15},
+{t:'পাঠ ৩৪ — দুটো বাক্য',sub:'ধারাবাহিক বাক্য',hint:'দুটো বাক্য একসাথে',text:'বাংলাদেশ সুন্দর দেশ এখানে অনেক নদী',tag:'medium',lv:2,wpmT:14},
+{t:'পাঠ ৩৫ — দীর্ঘ বাক্য',sub:'লম্বা বাক্য',hint:'লম্বা বাক্য বিরামহীন',text:'বাংলাদেশ একটি সুন্দর দেশ যেখানে অনেক নদী আছে',tag:'hard',lv:2,wpmT:13},
+{t:'পাঠ ৩৬ — খাবার বাক্য',sub:'খাওয়া নিয়ে',hint:'খাবার নিয়ে বাক্য',text:'আমি ভাত খাই সে মাছ পছন্দ করে',tag:'easy',lv:2,wpmT:15},
+{t:'পাঠ ৩৭ — নেতিবাচক',sub:'না নেই নয়',hint:'বাংলায় না বলা',text:'না আমি জানি না সে আসেনি',tag:'easy',lv:2,wpmT:16},
+{t:'পাঠ ৩৮ — মিশ্র বাক্য',sub:'কারণ তাই',hint:'কারণবাচক বাক্য',text:'আমি পড়ি কারণ পড়লে জ্ঞান হয়',tag:'medium',lv:2,wpmT:13},
+{t:'পাঠ ৩৯ — দীর্ঘ ২',sub:'আরও লম্বা',hint:'আরও দীর্ঘ বাক্য',text:'আমি বাংলা টাইপিং শিখছি এটি অনেক কাজে লাগে',tag:'hard',lv:2,wpmT:13},
+{t:'পাঠ ৪০ — ছোট অনুচ্ছেদ',sub:'দুটো বাক্য ক্রমাগত',hint:'দুটো সংযুক্ত বাক্য',text:'পড়াশোনা করো জ্ঞান অর্জন করো ভালো মানুষ হও',tag:'hard',lv:2,wpmT:13},
+{t:'পাঠ ৪১ — জাতীয় সংগীত ১',sub:'আমার সোনার বাংলা',hint:'জাতীয় সংগীতের প্রথম লাইন',text:'আমার সোনার বাংলা আমি তোমায় ভালোবাসি',tag:'hard',lv:3,wpmT:13},
+{t:'পাঠ ৪২ — জাতীয় সংগীত ২',sub:'দ্বিতীয় লাইন',hint:'জাতীয় সংগীতের দ্বিতীয় লাইন',text:'চিরদিন তোমার আকাশ তোমার বাতাস আমার প্রাণে',tag:'expert',lv:3,wpmT:11},
+{t:'পাঠ ৪৩ — রবীন্দ্রনাথ',sub:'বিশ্বকবির লাইন',hint:'রবীন্দ্রনাথের বিখ্যাত লাইন',text:'আমার মাথা নত করে দাও হে',tag:'hard',lv:3,wpmT:15},
+{t:'পাঠ ৪৪ — নজরুল',sub:'বিদ্রোহী কবি',hint:'নজরুলের বিদ্রোহী কবিতা',text:'বল বীর বল উন্নত মম শির',tag:'hard',lv:3,wpmT:15},
+{t:'পাঠ ৪৫ — বঙ্গবন্ধু',sub:'৭ মার্চের ভাষণ',hint:'বঙ্গবন্ধুর ঐতিহাসিক ভাষণ',text:'এবারের সংগ্রাম আমাদের মুক্তির সংগ্রাম',tag:'hard',lv:3,wpmT:13},
+{t:'পাঠ ৪৬ — প্রবাদ',sub:'বাংলার প্রবাদ',hint:'বাংলার বিখ্যাত প্রবাদ',text:'পরিশ্রম সৌভাগ্যের প্রসূতি',tag:'hard',lv:3,wpmT:14},
+{t:'পাঠ ৪৭ — মুক্তিযুদ্ধ',sub:'স্বাধীনতার কথা',hint:'মুক্তিযুদ্ধ নিয়ে বাক্য',text:'১৯৭১ সালে বাংলাদেশ স্বাধীন হয়েছিল',tag:'hard',lv:3,wpmT:13},
+{t:'পাঠ ৪৮ — ভাষা আন্দোলন',sub:'একুশে ফেব্রুয়ারি',hint:'ভাষা আন্দোলন নিয়ে',text:'১৯৫২ সালের ২১ ফেব্রুয়ারি ভাষা আন্দোলন হয়েছিল',tag:'expert',lv:3,wpmT:11},
+{t:'পাঠ ৪৯ — শামসুর রাহমান',sub:'আধুনিক কবি',hint:'শামসুর রাহমানের বিখ্যাত লাইন',text:'স্বাধীনতা তুমি রবি ঠাকুরের অমর কবিতা',tag:'expert',lv:3,wpmT:12},
+{t:'পাঠ ৫০ — নজরুল চল চল',sub:'চল চল চল',hint:'নজরুলের চল চল চল',text:'চল চল চল ঊর্ধ্ব গগনে বাজে মাদল',tag:'expert',lv:3,wpmT:13},
+{t:'পাঠ ৫১ — শিক্ষামূলক',sub:'শিক্ষার গুরুত্ব',hint:'শিক্ষা নিয়ে বাক্য',text:'শিক্ষা জাতির মেরুদণ্ড শিক্ষা ছাড়া উন্নতি নেই',tag:'hard',lv:4,wpmT:13},
+{t:'পাঠ ৫২ — দেশপ্রেম',sub:'দেশ ভালোবাসা',hint:'দেশপ্রেম নিয়ে বাক্য',text:'আমরা বাংলাদেশকে ভালোবাসি এটি আমাদের মাতৃভূমি',tag:'hard',lv:4,wpmT:13},
+{t:'পাঠ ৫৩ — পরিবেশ',sub:'পরিবেশ রক্ষা',hint:'পরিবেশ নিয়ে',text:'পরিবেশ রক্ষা করা আমাদের দায়িত্ব',tag:'hard',lv:4,wpmT:14},
+{t:'পাঠ ৫৪ — প্রযুক্তি',sub:'আধুনিক শব্দ',hint:'প্রযুক্তির শব্দ',text:'কম্পিউটার ইন্টারনেট মোবাইল ডিজিটাল',tag:'hard',lv:4,wpmT:13},
+{t:'পাঠ ৫৫ — দীর্ঘ অনুচ্ছেদ',sub:'লম্বা অনুচ্ছেদ',hint:'দীর্ঘ অনুচ্ছেদ',text:'বাংলাদেশ একটি নদীমাতৃক দেশ এখানে অনেক নদী আছে',tag:'hard',lv:4,wpmT:13},
+{t:'পাঠ ৫৬ — ডিজিটাল',sub:'ডিজিটাল বাংলাদেশ',hint:'ডিজিটাল বাংলাদেশ নিয়ে',text:'ডিজিটাল বাংলাদেশ গড়ার স্বপ্ন',tag:'hard',lv:4,wpmT:14},
+{t:'পাঠ ৫৭ — শহিদ মিনার',sub:'শহিদ মিনারের কথা',hint:'শহিদ মিনার নিয়ে',text:'শহিদ মিনার বাঙালির গর্বের প্রতীক',tag:'hard',lv:4,wpmT:14},
+{t:'পাঠ ৫৮ — গান ও সংস্কৃতি',sub:'বাংলার সংস্কৃতি',hint:'সঙ্গীত ও সংস্কৃতি',text:'বাউল লালন রবীন্দ্র নজরুল সংগীত',tag:'hard',lv:4,wpmT:13},
+{t:'পাঠ ৫৯ — স্বাস্থ্য',sub:'স্বাস্থ্য সচেতনতা',hint:'স্বাস্থ্য নিয়ে',text:'সুস্থ থাকতে নিয়মিত ব্যায়াম করুন',tag:'hard',lv:4,wpmT:14},
+{t:'পাঠ ৬০ — বাংলার গ্রাম',sub:'গ্রামের জীবন',hint:'গ্রামীণ জীবন',text:'বাংলাদেশের গ্রামগুলো সবুজ এবং সুন্দর',tag:'hard',lv:4,wpmT:13},
+{t:'পাঠ ৬১ — বিশেষজ্ঞ ১',sub:'দীর্ঘ বাক্য',hint:'বিশেষজ্ঞ স্তর',text:'বাংলা ভাষা আন্দোলন ১৯৫২ সালে সংঘটিত হয়েছিল',tag:'expert',lv:5,wpmT:12},
+{t:'পাঠ ৬২ — বিশেষজ্ঞ ২',sub:'সাহিত্যিক',hint:'উচ্চ সাহিত্যিক বাক্য',text:'রবীন্দ্রনাথ ঠাকুর বাংলা সাহিত্যের শ্রেষ্ঠ কবি',tag:'expert',lv:5,wpmT:12},
+{t:'পাঠ ৬৩ — বিশেষজ্ঞ ৩',sub:'মিশ্র',hint:'সংখ্যা ও বাক্য',text:'বাংলাদেশের মোট জনসংখ্যা প্রায় ১৭ কোটি',tag:'expert',lv:5,wpmT:12},
+{t:'পাঠ ৬৪ — বিশেষজ্ঞ ৪',sub:'ঐতিহাসিক',hint:'ইতিহাস নিয়ে',text:'১৬ ডিসেম্বর ১৯৭১ বাংলাদেশের বিজয় দিবস',tag:'expert',lv:5,wpmT:12},
+{t:'পাঠ ৬৫ — বিশেষজ্ঞ ৫',sub:'সাংস্কৃতিক',hint:'সংস্কৃতি নিয়ে',text:'পহেলা বৈশাখ বাংলাদেশের নববর্ষ উৎসব',tag:'expert',lv:5,wpmT:13},
+{t:'পাঠ ৬৬ — গতি মশক ১',sub:'ছোট শব্দ দ্রুত',hint:'সর্বোচ্চ গতি',text:'হ্যাঁ না ভালো খারাপ দিন রাত',tag:'medium',lv:4,wpmT:20},
+{t:'পাঠ ৬৭ — গতি মশক ২',sub:'মাঝারি শব্দ',hint:'মাঝারি দ্রুত',text:'বাংলা ভাষা শিক্ষা জ্ঞান বিজ্ঞান',tag:'hard',lv:4,wpmT:18},
+{t:'পাঠ ৬৮ — গতি মশক ৩',sub:'লম্বা শব্দ',hint:'নির্ভুলতা আগে',text:'স্বাধীনতা গণতন্ত্র উন্নয়ন সমৃদ্ধি',tag:'hard',lv:4,wpmT:14},
+{t:'পাঠ ৬৯ — গতি মশক ৪',sub:'বাক্য দ্রুত',hint:'বাক্য দ্রুত টাইপ',text:'আমি বাংলা পড়ি সে লেখে আপনি শেখেন',tag:'hard',lv:4,wpmT:16},
+{t:'পাঠ ৭০ — গতি মশক ৫',sub:'সংখ্যা ও শব্দ',hint:'সংখ্যা একসাথে',text:'২০২৪ সালে ১৭ কোটি মানুষ বাংলা বলে',tag:'hard',lv:4,wpmT:14},
+{t:'পাঠ ৭১ — জাতীয় সংগীত পূর্ণ',sub:'পূর্ণ দুই লাইন',hint:'দুই লাইন একসাথে',text:'আমার সোনার বাংলা আমি তোমায় ভালোবাসি চিরদিন',tag:'expert',lv:5,wpmT:12},
+{t:'পাঠ ৭২ — বঙ্গবন্ধু পূর্ণ',sub:'ভাষণের অংশ',hint:'পূর্ণ ভাষণ',text:'এবারের সংগ্রাম আমাদের মুক্তির সংগ্রাম এবারের স্বাধীনতার',tag:'expert',lv:5,wpmT:11},
+{t:'পাঠ ৭৩ — রবীন্দ্রনাথ বিস্তৃত',sub:'পূর্ণ লাইন',hint:'সম্পূর্ণ লাইন',text:'আমার মাথা নত করে দাও হে তোমার চরণ ধূলার তলে',tag:'expert',lv:5,wpmT:11},
+{t:'পাঠ ৭৪ — বিজয়ের গান',sub:'বিজয়ের কথা',hint:'বিজয় নিয়ে',text:'আমরা বিজয়ী জাতি আমাদের আছে গর্বের ইতিহাস',tag:'expert',lv:5,wpmT:13},
+{t:'পাঠ ৭৫ — একুশের অনুভব',sub:'মাতৃভাষার ভালোবাসা',hint:'মাতৃভাষার প্রতি ভালোবাসা',text:'বাংলা আমার মাতৃভাষা আমি এটিকে ভালোবাসি',tag:'expert',lv:5,wpmT:13},
+{t:'পাঠ ৭৬ — দীর্ঘতম বাক্য',sub:'সবচেয়ে দীর্ঘ বাক্য',hint:'সবচেয়ে দীর্ঘ',text:'বাংলাদেশ একটি গণতান্ত্রিক রাষ্ট্র যেখানে সংসদীয় শাসন আছে',tag:'expert',lv:5,wpmT:11},
+{t:'পাঠ ৭৭ — ভাষা গর্ব',sub:'বাংলা ভাষার গর্ব',hint:'ভাষার গর্ব',text:'বাংলা ভাষা পৃথিবীর সপ্তম বৃহত্তম ভাষা',tag:'expert',lv:5,wpmT:12},
+{t:'পাঠ ৭৮ — সংখ্যা ও সাহিত্য',sub:'মিশ্র পাঠ',hint:'সংখ্যা ও সাহিত্য',text:'১৯৫২ সালে ভাষা শহিদরা বাংলার জন্য প্রাণ দিয়েছিল',tag:'expert',lv:5,wpmT:11},
+{t:'পাঠ ৭৯ — কবিতার মিলন',sub:'দুই কবির লাইন',hint:'দুই কবির লাইন',text:'আমার সোনার বাংলা বল বীর বল উন্নত মম শির',tag:'expert',lv:5,wpmT:12},
+{t:'পাঠ ৮০ — চূড়ান্ত অনুচ্ছেদ',sub:'চূড়ান্ত',hint:'সবচেয়ে দীর্ঘ অনুচ্ছেদ',text:'আমি বাংলা টাইপিং শিখেছি এখন আমি দ্রুত টাইপ করতে পারি',tag:'expert',lv:5,wpmT:12},
+{t:'পাঠ ৮১ — সুন্দরবন',sub:'সুন্দরবনের কথা',hint:'ম্যানগ্রোভ বন',text:'সুন্দরবন পৃথিবীর বৃহত্তম ম্যানগ্রোভ অরণ্য',tag:'expert',lv:6,wpmT:12},
+{t:'পাঠ ৮২ — বঙ্গোপসাগর',sub:'সমুদ্র তীরবর্তী',hint:'বঙ্গোপসাগর',text:'বঙ্গোপসাগর বাংলাদেশের দক্ষিণে অবস্থিত',tag:'expert',lv:6,wpmT:12},
+{t:'পাঠ ৮৩ — ঢাকার ইতিহাস',sub:'রাজধানীর কথা',hint:'ঢাকার ইতিহাস',text:'ঢাকা বাংলাদেশের রাজধানী এবং সবচেয়ে বড় শহর',tag:'expert',lv:6,wpmT:12},
+{t:'পাঠ ৮৪ — স্বাধীনতা দিবস',sub:'২৬শে মার্চ',hint:'স্বাধীনতা দিবস',text:'২৬ মার্চ বাংলাদেশের স্বাধীনতা দিবস',tag:'expert',lv:6,wpmT:14},
+{t:'পাঠ ৮৫ — বিজয় দিবস',sub:'১৬ই ডিসেম্বর',hint:'বিজয় দিবস',text:'১৬ ডিসেম্বর বাংলাদেশের বিজয় দিবস ১৯৭১',tag:'expert',lv:6,wpmT:13},
+{t:'পাঠ ৮৬ — মাতৃভাষা দিবস',sub:'২১শে ফেব্রুয়ারি',hint:'মাতৃভাষা দিবস',text:'২১ ফেব্রুয়ারি আন্তর্জাতিক মাতৃভাষা দিবস',tag:'expert',lv:6,wpmT:13},
+{t:'পাঠ ৮৭ — রয়েল বেঙ্গল',sub:'জাতীয় পশু',hint:'জাতীয় পশু',text:'রয়েল বেঙ্গল টাইগার বাংলাদেশের জাতীয় পশু',tag:'expert',lv:6,wpmT:12},
+{t:'পাঠ ৮৮ — শাপলা ফুল',sub:'জাতীয় ফুল',hint:'জাতীয় ফুল শাপলা',text:'শাপলা বাংলাদেশের জাতীয় ফুল এটি সাদা রঙের',tag:'expert',lv:6,wpmT:14},
+{t:'পাঠ ৮৯ — গতির চ্যালেঞ্জ ১',sub:'সর্বোচ্চ গতি',hint:'সর্বোচ্চ গতি',text:'হ্যাঁ না আছি নেই ভালো মন্দ দিন রাত',tag:'expert',lv:6,wpmT:28},
+{t:'পাঠ ৯০ — গতির চ্যালেঞ্জ ২',sub:'বাক্য সর্বোচ্চ',hint:'সর্বোচ্চ গতিতে',text:'আমি পড়ি সে লেখে আমরা শিখি তোমরা জানো',tag:'expert',lv:6,wpmT:22},
+{t:'পাঠ ৯১ — রবীন্দ্রনাথের গান',sub:'রবীন্দ্রসংগীত',hint:'রবীন্দ্রনাথের গান',text:'আমার সোনার বাংলা আনন্দলোকে মঙ্গলালোকে',tag:'expert',lv:6,wpmT:11},
+{t:'পাঠ ৯২ — নজরুলের রণসংগীত',sub:'রণসংগীত',hint:'নজরুলের রণসংগীত',text:'চল চল চল ঊর্ধ্ব গগনে বাজে মাদল ধরণী',tag:'expert',lv:6,wpmT:10},
+{t:'পাঠ ৯৩ — বাংলাদেশের সংবিধান',sub:'সংবিধানের কথা',hint:'সংবিধান',text:'বাংলাদেশের সংবিধান ১৯৭২ সালে গৃহীত হয়েছিল',tag:'expert',lv:6,wpmT:12},
+{t:'পাঠ ৯৪ — শিল্প',sub:'গার্মেন্টস শিল্প',hint:'শিল্প বাণিজ্য',text:'গার্মেন্টস শিল্প বাংলাদেশের প্রধান রপ্তানি',tag:'expert',lv:6,wpmT:13},
+{t:'পাঠ ৯৫ — ইলিশ মাছ',sub:'জাতীয় মাছ',hint:'জাতীয় মাছ ইলিশ',text:'ইলিশ বাংলাদেশের জাতীয় মাছ পদ্মায় পাওয়া যায়',tag:'expert',lv:6,wpmT:13},
+{t:'পাঠ ৯৬ — মশকল শব্দ',sub:'কঠিন বাংলা শব্দ',hint:'কঠিন শব্দ',text:'সাংবিধানিক প্রশাসনিক আন্তর্জাতিক',tag:'expert',lv:6,wpmT:11},
+{t:'পাঠ ৯৭ — সাহিত্য সংকলন',sub:'কবিতার সংকলন',hint:'বিখ্যাত লাইন',text:'বল বীর আমার সোনার বাংলা পরিশ্রম সৌভাগ্য',tag:'expert',lv:6,wpmT:14},
+{t:'পাঠ ৯৮ — সর্বোচ্চ চ্যালেঞ্জ ১',sub:'তমাম মিলিয়ে',hint:'সব মিলিয়ে',text:'১৯৫২ সালে ভাষা শহিদরা বাংলা ভাষার জন্য প্রাণ দিয়েছিল',tag:'expert',lv:6,wpmT:11},
+{t:'পাঠ ৯৯ — সর্বোচ্চ চ্যালেঞ্জ ২',sub:'চূড়ান্ত চ্যালেঞ্জ',hint:'আপনার চূড়ান্ত পরীক্ষা',text:'বাংলা ভাষা আন্দোলনের ফলে ২১ ফেব্রুয়ারি আন্তর্জাতিক মাতৃভাষা দিবস',tag:'expert',lv:6,wpmT:11},
+{t:'পাঠ ১০০ — মহাসমাপনী',sub:'শেষ পাঠ',hint:'অভিনন্দন! এটি শেষ পাঠ — সব দিন',text:'আমি বাংলা টাইপিং শিখেছি বাংলা আমার মাতৃভাষা আমি গর্বিত',tag:'expert',lv:6,wpmT:12}
+],
+}
+const ALPHABETS={
+  en:[
+    {ar:'A a',name:'A',rom:'æ',note:'Short "a" as in apple.',forms:['A','a','A','a']},
+    {ar:'B b',name:'B',rom:'b',note:'Like b in ball.',forms:['B','b','B','b']},
+    {ar:'C c',name:'C',rom:'k/s',note:'Hard C (cat) or soft C (city).',forms:['C','c','C','c']},
+    {ar:'D d',name:'D',rom:'d',note:'Like d in dog.',forms:['D','d','D','d']},
+    {ar:'E e',name:'E',rom:'e/iː',note:'Short e (pen) or long ee (see).',forms:['E','e','E','e']},
+    {ar:'F f',name:'F',rom:'f',note:'Like f in fish.',forms:['F','f','F','f']},
+    {ar:'G g',name:'G',rom:'g/dʒ',note:'Hard g (go) or soft g (gym).',forms:['G','g','G','g']},
+    {ar:'H h',name:'H',rom:'h',note:'Like h in hat.',forms:['H','h','H','h']},
+    {ar:'I i',name:'I',rom:'ɪ/aɪ',note:'Short i (sit) or long eye (kite).',forms:['I','i','I','i']},
+    {ar:'J j',name:'J',rom:'dʒ',note:'Like j in jump.',forms:['J','j','J','j']},
+    {ar:'K k',name:'K',rom:'k',note:'Like k in king.',forms:['K','k','K','k']},
+    {ar:'L l',name:'L',rom:'l',note:'Like l in lamp.',forms:['L','l','L','l']},
+    {ar:'M m',name:'M',rom:'m',note:'Like m in man.',forms:['M','m','M','m']},
+    {ar:'N n',name:'N',rom:'n',note:'Like n in night.',forms:['N','n','N','n']},
+    {ar:'O o',name:'O',rom:'ɒ/oʊ',note:'Short o (hot) or long oh (go).',forms:['O','o','O','o']},
+    {ar:'P p',name:'P',rom:'p',note:'Like p in pen.',forms:['P','p','P','p']},
+    {ar:'Q q',name:'Q',rom:'kw',note:'Usually followed by u — queen, quiet.',forms:['Q','q','Q','q']},
+    {ar:'R r',name:'R',rom:'r',note:'Like r in run.',forms:['R','r','R','r']},
+    {ar:'S s',name:'S',rom:'s/z',note:'Like s in sun or z in rose.',forms:['S','s','S','s']},
+    {ar:'T t',name:'T',rom:'t',note:'Like t in top.',forms:['T','t','T','t']},
+    {ar:'U u',name:'U',rom:'ʌ/juː',note:'Short u (cup) or long you (cube).',forms:['U','u','U','u']},
+    {ar:'V v',name:'V',rom:'v',note:'Like v in van.',forms:['V','v','V','v']},
+    {ar:'W w',name:'W',rom:'w',note:'Like w in win.',forms:['W','w','W','w']},
+    {ar:'X x',name:'X',rom:'ks/z',note:'Like ks (box) or z (xylophone).',forms:['X','x','X','x']},
+    {ar:'Y y',name:'Y',rom:'j/ɪ',note:'Like y (yes) or vowel (gym).',forms:['Y','y','Y','y']},
+    {ar:'Z z',name:'Z',rom:'z',note:'Like z in zoo.',forms:['Z','z','Z','z']},
+  ],
+  ar:[
+    {ar:'ا',name:'Alef',rom:'ā/ʾ',note:'Non-connecting. Long "a" or glottal stop. One of 6 non-connectors.',forms:['ا','ا','ـا','ـا']},
+    {ar:'ب',name:'Ba',rom:'b',note:'Like "b". 1 dot below. Shares shape with ت and ث.',forms:['ب','بـ','ـبـ','ـب']},
+    {ar:'ت',name:'Ta',rom:'t',note:'Like "t". 2 dots above.',forms:['ت','تـ','ـتـ','ـت']},
+    {ar:'ث',name:'Tha',rom:'th',note:'"th" as in "thing". 3 dots above.',forms:['ث','ثـ','ـثـ','ـث']},
+    {ar:'ج',name:'Jim',rom:'j',note:'Like "j". 1 dot below.',forms:['ج','جـ','ـجـ','ـج']},
+    {ar:'ح',name:'Ha',rom:'ḥ',note:'Breathy "h" from deep in the throat. No dots.',forms:['ح','حـ','ـحـ','ـح']},
+    {ar:'خ',name:'Kha',rom:'kh',note:'Like Scottish "loch". 1 dot above.',forms:['خ','خـ','ـخـ','ـخ']},
+    {ar:'د',name:'Dal',rom:'d',note:'Like "d". Non-connecting — never joins what follows.',forms:['د','د','ـد','ـد']},
+    {ar:'ذ',name:'Dhal',rom:'dh',note:'"th" in "this". Non-connecting.',forms:['ذ','ذ','ـذ','ـذ']},
+    {ar:'ر',name:'Ra',rom:'r',note:'Rolled "r". Non-connecting.',forms:['ر','ر','ـر','ـر']},
+    {ar:'ز',name:'Zay',rom:'z',note:'Like "z". Non-connecting.',forms:['ز','ز','ـز','ـز']},
+    {ar:'س',name:'Sin',rom:'s',note:'Like "s". Wavy base with no dots.',forms:['س','سـ','ـسـ','ـس']},
+    {ar:'ش',name:'Shin',rom:'sh',note:'"sh" in "ship". 3 dots above Sin.',forms:['ش','شـ','ـشـ','ـش']},
+    {ar:'ص',name:'Sad',rom:'ṣ',note:'Emphatic "s" — tongue pressed to roof of mouth.',forms:['ص','صـ','ـصـ','ـص']},
+    {ar:'ض',name:'Dad',rom:'ḍ',note:'Emphatic "d". Unique to Arabic — the language is called "language of the Dad"!',forms:['ض','ضـ','ـضـ','ـض']},
+    {ar:'ط',name:'Ṭa',rom:'ṭ',note:'Emphatic "t" — heavier than ت.',forms:['ط','طـ','ـطـ','ـط']},
+    {ar:'ظ',name:'Ẓha',rom:'ẓ',note:'Emphatic "dh".',forms:['ظ','ظـ','ـظـ','ـظ']},
+    {ar:'ع',name:'Ain',rom:'ʿ',note:'Voiced pharyngeal fricative — unique to Arabic, no English equivalent at all.',forms:['ع','عـ','ـعـ','ـع']},
+    {ar:'غ',name:'Ghain',rom:'gh',note:'Like French "r" — a guttural gargling sound. 1 dot above.',forms:['غ','غـ','ـغـ','ـغ']},
+    {ar:'ف',name:'Fa',rom:'f',note:'Like "f". 1 dot above a circle shape.',forms:['ف','فـ','ـفـ','ـف']},
+    {ar:'ق',name:'Qaf',rom:'q',note:'Deep "k" from the back of the throat. 2 dots above.',forms:['ق','قـ','ـقـ','ـق']},
+    {ar:'ك',name:'Kaf',rom:'k',note:'Like "k".',forms:['ك','كـ','ـكـ','ـك']},
+    {ar:'ل',name:'Lam',rom:'l',note:'Like "l". Combines with Alef to form لا — a special ligature.',forms:['ل','لـ','ـلـ','ـل']},
+    {ar:'م',name:'Mim',rom:'m',note:'Like "m". Has a distinctive circular shape.',forms:['م','مـ','ـمـ','ـم']},
+    {ar:'ن',name:'Nun',rom:'n',note:'Like "n". 1 dot below.',forms:['ن','نـ','ـنـ','ـن']},
+    {ar:'ه',name:'Ha',rom:'h',note:'Like "h". Changes shape dramatically across the 4 positions.',forms:['ه','هـ','ـهـ','ـه']},
+    {ar:'و',name:'Waw',rom:'w/ū',note:'Like "w" or long "oo". Non-connecting.',forms:['و','و','ـو','ـو']},
+    {ar:'ي',name:'Ya',rom:'y/ī',note:'Like "y" or long "ee". 2 dots below in isolated/final.',forms:['ي','يـ','ـيـ','ـي']},
+  ],
+  ur:[
+    {ar:'ا',name:'Alef',rom:'a/ā',note:'Long or short "a".',forms:['ا','ا','ـا','ـا']},
+    {ar:'ب',name:'Be',rom:'b',note:'Like "b".',forms:['ب','بـ','ـبـ','ـب']},
+    {ar:'پ',name:'Pe',rom:'p',note:'"p" — unique to Urdu/Persian, not in Arabic.',forms:['پ','پـ','ـپـ','ـپ']},
+    {ar:'ت',name:'Te',rom:'t',note:'Like "t".',forms:['ت','تـ','ـتـ','ـت']},
+    {ar:'ٹ',name:'Ṭe',rom:'ṭ',note:'Retroflex "t" — tongue curled back. Only in Urdu.',forms:['ٹ','ٹ','ٹ','ٹ']},
+    {ar:'ث',name:'Se',rom:'s',note:'Like "s" in Urdu.',forms:['ث','ثـ','ـثـ','ـث']},
+    {ar:'ج',name:'Jim',rom:'j',note:'Like "j".',forms:['ج','جـ','ـجـ','ـج']},
+    {ar:'چ',name:'Che',rom:'ch',note:'"ch" in "chair" — unique to Urdu.',forms:['چ','چـ','ـچـ','ـچ']},
+    {ar:'ح',name:'He',rom:'h',note:'Breathy "h".',forms:['ح','حـ','ـحـ','ـح']},
+    {ar:'خ',name:'Khe',rom:'kh',note:'"kh" sound.',forms:['خ','خـ','ـخـ','ـخ']},
+    {ar:'د',name:'Dal',rom:'d',note:'Like "d".',forms:['د','د','ـد','ـد']},
+    {ar:'ڈ',name:'Ḍal',rom:'ḍ',note:'Retroflex "d" — Urdu only.',forms:['ڈ','ڈ','ڈ','ڈ']},
+    {ar:'ذ',name:'Zal',rom:'z',note:'Like "z" in Urdu.',forms:['ذ','ذ','ـذ','ـذ']},
+    {ar:'ر',name:'Re',rom:'r',note:'Like "r".',forms:['ر','ر','ـر','ـر']},
+    {ar:'ڑ',name:'Ṛe',rom:'ṛ',note:'Retroflex flap — unique to Urdu.',forms:['ڑ','ڑ','ڑ','ڑ']},
+    {ar:'ز',name:'Ze',rom:'z',note:'Like "z".',forms:['ز','ز','ـز','ـز']},
+    {ar:'ژ',name:'Zhe',rom:'zh',note:'Like French "j" — used in loanwords like ٹیلی ویژن.',forms:['ژ','ژ','ژ','ژ']},
+    {ar:'س',name:'Sin',rom:'s',note:'Like "s".',forms:['س','سـ','ـسـ','ـس']},
+    {ar:'ش',name:'Shin',rom:'sh',note:'Like "sh".',forms:['ش','شـ','ـشـ','ـش']},
+    {ar:'ص',name:'Suad',rom:'s',note:'Emphatic "s" — from Arabic.',forms:['ص','صـ','ـصـ','ـص']},
+    {ar:'ض',name:'Zuad',rom:'z',note:'Pronounced as "z" in Urdu (differs from Arabic).',forms:['ض','ضـ','ـضـ','ـض']},
+    {ar:'ط',name:'Toe',rom:'t',note:'Emphatic "t".',forms:['ط','طـ','ـطـ','ـط']},
+    {ar:'ظ',name:'Zoe',rom:'z',note:'Pronounced as "z" in Urdu.',forms:['ظ','ظـ','ـظـ','ـظ']},
+    {ar:'ع',name:'Ain',rom:'ʿ',note:'Pharyngeal sound.',forms:['ع','عـ','ـعـ','ـع']},
+    {ar:'غ',name:'Ghain',rom:'gh',note:'Guttural "gh".',forms:['غ','غـ','ـغـ','ـغ']},
+    {ar:'ف',name:'Fe',rom:'f',note:'Like "f".',forms:['ف','فـ','ـفـ','ـف']},
+    {ar:'ق',name:'Qaf',rom:'q',note:'Deep "q" from throat.',forms:['ق','قـ','ـقـ','ـق']},
+    {ar:'ک',name:'Kaf',rom:'k',note:'Like "k". Urdu shape differs from Arabic ك.',forms:['ک','کـ','ـکـ','ـک']},
+    {ar:'گ',name:'Gaf',rom:'g',note:'"g" in "go" — unique to Urdu/Persian.',forms:['گ','گـ','ـگـ','ـگ']},
+    {ar:'ل',name:'Lam',rom:'l',note:'Like "l".',forms:['ل','لـ','ـلـ','ـل']},
+    {ar:'م',name:'Mim',rom:'m',note:'Like "m".',forms:['م','مـ','ـمـ','ـم']},
+    {ar:'ن',name:'Nun',rom:'n',note:'Like "n".',forms:['ن','نـ','ـنـ','ـن']},
+    {ar:'و',name:'Wao',rom:'w/v/ū',note:'Like "w", "v", or long "oo".',forms:['و','و','ـو','ـو']},
+    {ar:'ہ',name:'He',rom:'h',note:'Main "h" in Urdu. Shape differs from Arabic ه.',forms:['ہ','ہـ','ـہـ','ـہ']},
+    {ar:'ی',name:'Ye',rom:'y/ī',note:'Like "y" or long "ee".',forms:['ی','یـ','ـیـ','ـی']},
+    {ar:'ے',name:'Baṛī ye',rom:'e/ai',note:'Unique to Urdu — long "ay" sound. Appears at end of words only.',forms:['ے','ے','ـے','ـے']},
+  ],
+  bn:[
+    {ar:'অ',name:'A',rom:'ɔ',note:'Open back vowel — like "aw" in "saw".',forms:['অ','অ','অ','অ']},
+    {ar:'আ',name:'Aa',rom:'a',note:'Long "a" — the most common vowel.',forms:['আ','আ','া','া']},
+    {ar:'ই',name:'I',rom:'i',note:'Short "i".',forms:['ই','ই','ি','ি']},
+    {ar:'ঈ',name:'Ii',rom:'iː',note:'Long "ee".',forms:['ঈ','ঈ','ী','ী']},
+    {ar:'উ',name:'U',rom:'u',note:'Short "u".',forms:['উ','উ','ু','ু']},
+    {ar:'ক',name:'Ka',rom:'k',note:'Like "k" in "sky" — unaspirated.',forms:['ক','ক','ক','ক']},
+    {ar:'খ',name:'Kha',rom:'kh',note:'Aspirated "k" — strong puff of air.',forms:['খ','খ','খ','খ']},
+    {ar:'গ',name:'Ga',rom:'g',note:'Like "g" in "go".',forms:['গ','গ','গ','গ']},
+    {ar:'ঘ',name:'Gha',rom:'gh',note:'Aspirated "g".',forms:['ঘ','ঘ','ঘ','ঘ']},
+    {ar:'চ',name:'Ca',rom:'ch',note:'Like "ch" in "chair".',forms:['চ','চ','চ','চ']},
+    {ar:'জ',name:'Ja',rom:'j',note:'Like "j" in "jam".',forms:['জ','জ','জ','জ']},
+    {ar:'ট',name:'Ṭa',rom:'ṭ',note:'Retroflex "t" — tongue curled back.',forms:['ট','ট','ট','ট']},
+    {ar:'ড',name:'Ḍa',rom:'ḍ',note:'Retroflex "d".',forms:['ড','ড','ড','ড']},
+    {ar:'ত',name:'Ta',rom:'t',note:'Dental "t" — tongue on teeth.',forms:['ত','ত','ত','ত']},
+    {ar:'দ',name:'Da',rom:'d',note:'Dental "d".',forms:['দ','দ','দ','দ']},
+    {ar:'ন',name:'Na',rom:'n',note:'Like "n".',forms:['ন','ন','ন','ন']},
+    {ar:'প',name:'Pa',rom:'p',note:'Like "p" — unaspirated.',forms:['প','প','প','প']},
+    {ar:'ফ',name:'Pha',rom:'ph/f',note:'Aspirated "p" or like "f".',forms:['ফ','ফ','ফ','ফ']},
+    {ar:'ব',name:'Ba',rom:'b',note:'Like "b".',forms:['ব','ব','ব','ব']},
+    {ar:'ভ',name:'Bha',rom:'bh/v',note:'Aspirated "b" or like "v".',forms:['ভ','ভ','ভ','ভ']},
+    {ar:'ম',name:'Ma',rom:'m',note:'Like "m".',forms:['ম','ম','ম','ম']},
+    {ar:'য',name:'Ya',rom:'j/y',note:'"j" at start of word, "y" in middle.',forms:['য','য','য','য']},
+    {ar:'র',name:'Ra',rom:'r',note:'Flap "r" — tongue briefly taps the roof.',forms:['র','র','র','র']},
+    {ar:'ল',name:'La',rom:'l',note:'Like "l".',forms:['ল','ল','ল','ল']},
+    {ar:'শ',name:'Sha',rom:'sh',note:'Like "sh".',forms:['শ','শ','শ','শ']},
+    {ar:'স',name:'Sa',rom:'s',note:'Like "s".',forms:['স','স','স','স']},
+    {ar:'হ',name:'Ha',rom:'h',note:'Like "h".',forms:['হ','হ','হ','হ']},
+  ],
+};
+
+/* ════════════════════════════════════
+   SETTINGS
+════════════════════════════════════ */
+const DEFAULT_SETTINGS={sound:true,fingers:true,locks:false,shake:true,fontSize:'medium',wpmTarget:30};
+let SETTINGS=JSON.parse(lsGet('tm_settings')||'null')||{...DEFAULT_SETTINGS};
+function saveSetting(){lsSet('tm_settings',JSON.stringify(SETTINGS));}
+
+function toggleSetting(k){
+  SETTINGS[k]=!SETTINGS[k]; saveSetting();
+  document.getElementById('toggle-'+k).classList.toggle('on',SETTINGS[k]);
+  if(k==='fingers'){
+    const hr=document.getElementById('handsRow');
+    if(hr) hr.style.display=SETTINGS.fingers?'flex':'none';
+    const hrf=document.getElementById('handsRowFree');
+    if(hrf) hrf.style.display=SETTINGS.fingers?'flex':'none';
+  }
+}
+function setFontSize(v){
+  SETTINGS.fontSize=v; saveSetting();
+  applyFontSize();
+}
+function applyFontSize(){
+  const sizes={small:'18px',medium:'24px',large:'30px'};
+  const rtlSizes={small:'20px',medium:'26px',large:'32px'};
+  const tt=document.getElementById('targetText');
+  if(!tt) return;
+  const rtl=LAYOUTS[lang].isRTL;
+  tt.style.fontSize=rtl?rtlSizes[SETTINGS.fontSize]:sizes[SETTINGS.fontSize];
+}
+function setWpmTarget(v){SETTINGS.wpmTarget=parseInt(v);saveSetting();}
+function openSettings(){
+  document.getElementById('settingsOverlay').classList.add('open');
+  // sync toggles
+  ['sound','fingers','locks','shake'].forEach(k=>{
+    document.getElementById('toggle-'+k).classList.toggle('on',SETTINGS[k]);
+  });
+  document.getElementById('fontSizeSelect').value=SETTINGS.fontSize;
+  document.getElementById('wpmTargetSelect').value=SETTINGS.wpmTarget;
+}
+function closeSettings(){document.getElementById('settingsOverlay').classList.remove('open');}
+
+/* ════════════════════════════════════
+   SOUND ENGINE
+════════════════════════════════════ */
+const AudioCtx=window.AudioContext||window.webkitAudioContext;
+let audioCtx=null;
+function getAudioCtx(){
+  if(!audioCtx) audioCtx=new AudioCtx();
+  return audioCtx;
+}
+function playSound(type){
+  if(!SETTINGS.sound) return;
+  try{
+    const ctx=getAudioCtx();
+    const o=ctx.createOscillator();
+    const g=ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    const freqs={click:800,error:200,complete:1200,star:1600};
+    const durs={click:.04,error:.12,complete:.2,star:.15};
+    const types={click:'square',error:'sawtooth',complete:'sine',star:'sine'};
+    o.frequency.value=freqs[type]||600;
+    o.type=types[type]||'sine';
+    g.gain.setValueAtTime(.15,ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+(durs[type]||.1));
+    o.start(ctx.currentTime);
+    o.stop(ctx.currentTime+(durs[type]||.1)+.02);
+    if(type==='complete'){
+      setTimeout(()=>{
+        const o2=ctx.createOscillator();
+        const g2=ctx.createGain();
+        o2.connect(g2);g2.connect(ctx.destination);
+        o2.frequency.value=1600;o2.type='sine';
+        g2.gain.setValueAtTime(.15,ctx.currentTime);
+        g2.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.15);
+        o2.start(ctx.currentTime);o2.stop(ctx.currentTime+.17);
+      },150);
+    }
+  } catch(e){}
+}
+
+/* ════════════════════════════════════
+   STATE
+════════════════════════════════════ */
+const LANG_NAMES={en:'English',ar:'Arabic',ur:'Urdu',bn:'Bengali'};
+const LANG_FONTS={en:"'Inter',sans-serif",ar:"'Amiri',serif",ur:"'Amiri',serif",bn:"'Noto Sans Bengali',sans-serif"};
+const PHASE_COLORS=[['#4ade80','rgba(74,222,128,.15)'],['#60a5fa','rgba(96,165,250,.15)'],['#f5c842','rgba(245,200,66,.15)'],['#fb7185','rgba(251,113,133,.15)'],['#a78bfa','rgba(167,139,250,.15)'],['#e11d48','rgba(225,29,72,.15)']];
+
+let lang='en', curPage='lessons', curLesson=0;
+let lessonInput='', lessonStart=null, lessonErrors=0;
+let timerInt=null, wpmInt=null, freeText='', statsLangView='en';
+let lessonMode='practice'; // 'practice' or 'test'
+let showHints=true;
+let heatmap=JSON.parse(lsGet('tm_heatmap_'+lang)||'{}');
+
+function getLangStore(k,l){return JSON.parse(lsGet('tm_'+k+'_'+(l||lang))||'null');}
+function setLangStore(k,v,l){lsSet('tm_'+k+'_'+(l||lang),JSON.stringify(v));}
+function getCompleted(l){return getLangStore('done',l)||[];}
+function setCompleted(l,v){setLangStore('done',v,l);}
+function getSessions(l){return getLangStore('sess',l)||[];}
+function setSessions(l,v){setLangStore('sess',v,l);}
+function getBests(l){return getLangStore('bests',l)||{};}
+function setBests(l,v){setLangStore('bests',v,l);}
+function getStars(l){return getLangStore('stars',l)||{};}
+function setStars(l,v){setLangStore('stars',v,l);}
+
+/* ════════════════════════════════════
+   STREAK
+════════════════════════════════════ */
+function updateStreak(){
+  const today=new Date().toDateString();
+  const last=lsGet('tm_lastDay');
+  let streak=parseInt(lsGet('tm_streak','0'));
+  if(last===today){/* same day */}
+  else if(last===new Date(Date.now()-864e5).toDateString()){streak++;lsSet('tm_streak',streak);lsSet('tm_lastDay',today);}
+  else if(!last){streak=1;lsSet('tm_streak',streak);lsSet('tm_lastDay',today);}
+  else{streak=1;lsSet('tm_streak',streak);lsSet('tm_lastDay',today);}
+  document.getElementById('streakCount').textContent=streak;
+  return streak;
+}
+
+/* ════════════════════════════════════
+   SIDEBAR / MODAL
+════════════════════════════════════ */
+function toggleSidebar(){
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebarOverlay').classList.toggle('show');
+}
+function openSidebar(){
+  document.getElementById('sidebar').classList.add('open');
+  document.getElementById('sidebarOverlay').classList.add('show');
+}
+function closeSidebar(){
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('show');
+}
+
+/* ════════════════════════════════════
+   LANGUAGE SWITCH
+════════════════════════════════════ */
+function switchLang(l){
+  lang=l;
+  document.documentElement.lang={en:'en',ar:'ar',ur:'ur',bn:'bn'}[l]||'en';
+  heatmap=JSON.parse(lsGet('tm_heatmap_'+l)||'{}');
+  document.querySelectorAll('.lb').forEach(b=>b.classList.remove('on'));
+  document.getElementById('lb-'+l).classList.add('on');
+  document.getElementById('hLang').textContent=l.toUpperCase();
+  document.getElementById('sb-lang').textContent=LANG_NAMES[l];
+  rebuildLessons(); rebuildAlphabet(); rebuildKeyMap(); buildGuide(); updateSidebar(); applyRTL(); const _kbf=document.getElementById('kbFree'); if(_kbf) _kbf.innerHTML='';
+  goPage('lessons');
+}
+
+function applyRTL(){
+  const rtl=LAYOUTS[lang].isRTL;
+  const inp=document.getElementById('typingInput');
+  inp.dir=rtl?'rtl':'ltr';
+  inp.style.textAlign=rtl?'right':'left';
+  inp.className='typing-input'+(rtl?' rtl ':' ')+lang;
+  inp.placeholder=rtl?'...اكتب هنا':'Type here…';
+  document.getElementById('targetWrap').classList.toggle('rtl',rtl);
+  document.getElementById('freeDisp').classList.toggle('rtl-free',rtl);
+}
+
+/* ════════════════════════════════════
+   NAV
+════════════════════════════════════ */
+function goPage(p){
+  document.querySelectorAll('.page').forEach(el=>el.classList.remove('on','active'));
+  document.querySelectorAll('.nv').forEach(el=>el.classList.remove('on','active'));
+  const pg=document.getElementById('page-'+p);
+  if(pg) pg.classList.add('on');
+  document.querySelectorAll('.nv[data-page]').forEach(el=>{
+    if(el.dataset.page===p) el.classList.add('on');
+  });
+  curPage=p;
+  if(p==='free'){if(!document.querySelector('#kbFree .key')){buildKb('kbFree',handleFreeKey,'ffl');}renderFreeDisp();}
+  if(p==='stats') showLangStats(lang);
+  if(p==='lesson') setTimeout(()=>document.getElementById('typingInput').focus(),100);
+  if(p==='guide') buildGuide();
+  if(p==='heatmap') renderHeatmap();
+}
+function navTo(p){goPage(p);}  /* alias for bottom-nav onclick */
+
+/* ════════════════════════════════════
+   LESSON UNLOCK CHECK
+════════════════════════════════════ */
+function isUnlocked(idx){return true;}
+
+function calcStars(acc, wpm, lesson){
+  const wpmT=lesson.wpmT||20;
+  if(acc>=95 && wpm>=wpmT) return 3;
+  if(acc>=85) return 2;
+  if(acc>=70) return 1;
+  return 0;
+}
+
+function starsStr(n){
+  return ['','⭐','⭐⭐','⭐⭐⭐'][n]||'';
+}
+
+/* ════════════════════════════════════
+   LESSON LIST BUILD
+════════════════════════════════════ */
+function rebuildLessons(){
+  const lessons=LESSONS_DATA[lang];
+  const count=lessons.length;
+  document.getElementById('lessons-title').textContent=LANG_NAMES[lang]+' Lessons';
+  document.getElementById('lessons-sub').textContent=count+' lessons across '+(PHASES[lang]?.length||7)+' phases — easiest to hardest. All lessons unlocked!';
+  const _done=(getCompleted(lang)||[]).length;
+  const _rem=count-_done;
+  const _badge=document.getElementById('nb-lessons');
+  if(_badge){_badge.textContent=_rem>0?_rem:'✓';_badge.style.background=_rem>0?'var(--rose)':'var(--green)';}
+  const g=document.getElementById('lessonGrid'); g.innerHTML='';
+  const done=getCompleted(lang);
+  const bests=getBests(lang);
+  const stars=getStars(lang);
+  const isRTL=LAYOUTS[lang].isRTL;
+  const font=LANG_FONTS[lang];
+  let lastLv=-1;
+  const phases=PHASES[lang]||[];
+
+  lessons.forEach((ls,i)=>{
+    if(ls.lv!==lastLv){
+      lastLv=ls.lv;
+      const sep=document.createElement('div'); sep.className='phase-sep';
+      sep.innerHTML=`<div class="phase-sep-line"></div><div class="phase-sep-label">${phases[ls.lv]||'Phase '+(ls.lv+1)}</div><div class="phase-sep-line"></div>`;
+      g.appendChild(sep);
+    }
+    const unlocked=true;
+    const isDone=done.includes(i);
+    const hasSession=getSessions(lang).some(s=>s.l===i);
+    const inProg=!isDone&&hasSession;
+    const starCount=stars[i]||0;
+    const best=bests[i];
+    const [col,bg]=PHASE_COLORS[ls.lv]||PHASE_COLORS[0];
+    const tagCls=ls.tag==='easy'?'te':ls.tag==='medium'?'tm':ls.tag==='hard'?'th':'tx';
+
+    const d=document.createElement('div');
+    d.className='lcard';
+    d.innerHTML=`
+      <div class="dtick ${isDone?'show':''}">✓</div>${inProg?'<div class="dprog">◐</div>':''}
+      <div class="lcard-top">
+        <div class="lnum" style="background:${bg};color:${col}">${i+1}</div>
+        <div class="lcard-info">
+          <h4>${ls.t}</h4>
+          <p>${ls.hint}</p>
+        </div>
+      </div>
+      <div class="lcard-prev" style="font-family:${font};${isRTL?'direction:rtl;text-align:right':''}">${ls.text.length>26?ls.text.slice(0,26)+'…':ls.text}</div>
+      <div class="lcard-foot">
+        <span class="ltag ${tagCls}">${ls.tag}</span>
+        <span class="lchars">${ls.text.replace(/ /g,'').length} chars</span>
+        ${best?`<span class="lbest">Best: ${best} WPM</span>`:''}
+        <span class="lcard-stars">${starsStr(starCount)}</span>
+      </div>`;
+    if(unlocked) d.onclick=()=>startLesson(i);
+    g.appendChild(d);
+  });
+  updateSidebar();
+}
+
+/* ════════════════════════════════════
+   START LESSON
+════════════════════════════════════ */
+function startLesson(idx){
+  
+  curLesson=idx; lessonInput=''; lessonStart=null; lessonErrors=0;
+  clearInterval(timerInt); clearInterval(wpmInt);
+
+  const lessons=LESSONS_DATA[lang];
+  const ls=lessons[idx];
+  const done=getCompleted(lang);
+  const stars=getStars(lang);
+
+  // Build tabs
+  const tabs=document.getElementById('lessonTabs'); tabs.innerHTML='';
+  lessons.forEach((l,i)=>{
+    const unl=isUnlocked(i);
+    const d=document.createElement('div');
+    d.className='ltab'+(i===idx?' on':'')+(done.includes(i)?' done':'');
+    const sc=stars[i]||0;
+    d.innerHTML='L'+(i+1)+(sc?`<span class="tab-stars">${'★'.repeat(sc)}</span>`:'');
+    d.title=l.t;
+    d.onclick=()=>startLesson(i);
+    tabs.appendChild(d);
+  });
+  setTimeout(()=>{const a=tabs.querySelector('.ltab.on');if(a)a.scrollIntoView({block:'nearest',inline:'center'});},50);
+
+  // Lesson header
+  const phases=PHASES[lang]||[];
+  const phaseColor=PHASE_COLORS[ls.lv]||PHASE_COLORS[0];
+  document.getElementById('lhdr-title').textContent=ls.t;
+  document.getElementById('lhdr-sub').textContent=ls.sub;
+  document.getElementById('lhdr-phase').textContent=phases[ls.lv]||'';
+  document.getElementById('lhdr-phase').style.cssText=`background:${phaseColor[1]};color:${phaseColor[0]};border:1px solid ${phaseColor[0]}44;`;
+
+  // WPM target indicator
+  const wpmT=ls.wpmT||SETTINGS.wpmTarget||20;
+  document.getElementById('wpmTargetText').textContent=`Target: ${wpmT} WPM`;
+  updateWpmIndicator(0,wpmT);
+
+  applyRTL();
+  document.getElementById('targetText').style.fontFamily=LANG_FONTS[lang];
+  applyFontSize();
+  buildKb('kbLesson',handleLessonKey,'fl');
+  resetStatBar();
+  renderLesson();
+  goPage('lesson');
+  document.getElementById('typingInput').value='';
+  setTimeout(()=>document.getElementById('typingInput').focus(),100);
+
+  timerInt=setInterval(()=>{
+    if(!lessonStart) return;
+    const s=Math.floor((Date.now()-lessonStart)/1000);
+    document.getElementById('stTime').textContent=pad(Math.floor(s/60))+':'+pad(s%60);
+  },500);
+  wpmInt=setInterval(()=>{
+    if(!lessonStart) return;
+    const e=(Date.now()-lessonStart)/60000;
+    const w=Math.round((lessonInput.replace(/ /g,'').length/5)/e);
+    const live=Math.max(0,w);
+    document.getElementById('stWpm').textContent=live;
+    document.getElementById('hWpm').textContent=live+' WPM';
+    updateWpmIndicator(live,LESSONS_DATA[lang][curLesson].wpmT||20);
+  },1000);
+}
+
+function updateWpmIndicator(wpm,target){
+  const dot=document.getElementById('wpmDot');
+  const txt=document.getElementById('wpmTargetText');
+  if(!dot) return;
+  if(wpm===0){dot.style.background='var(--text3)';txt.textContent=`Target: ${target} WPM`;}
+  else if(wpm>=target){dot.style.background='var(--green)';txt.textContent=`${wpm}/${target} WPM ✓`;}
+  else if(wpm>=target*.7){dot.style.background='var(--orange)';txt.textContent=`${wpm}/${target} WPM`;}
+  else{dot.style.background='var(--rose)';txt.textContent=`${wpm}/${target} WPM`;}
+}
+
+const pad=n=>String(n).padStart(2,'0');
+
+/* ════════════════════════════════════
+   RENDER LESSON
+════════════════════════════════════ */
+function renderLesson(){
+  const target=LESSONS_DATA[lang][curLesson].text;
+  let html='';
+  for(let i=0;i<target.length;i++){
+    const ch=target[i];
+    const isSpace=ch===' ';
+    let cls='ch-todo';
+    if(i<lessonInput.length){
+      const correct=lessonInput[i]===ch;
+      cls=correct?(isSpace?'ch-space-done':'ch-done'):(isSpace?'ch-space-wrong':'ch-wrong');
+    } else if(i===lessonInput.length) cls='ch-cur';
+    html+=`<span class="${cls}">${isSpace?'·':ch}</span>`;
+  }
+  document.getElementById('targetText').innerHTML=html;
+
+  const prog=Math.min(100,Math.round(lessonInput.length/target.length*100));
+  document.getElementById('progFill').style.width=prog+'%';
+  document.getElementById('stProg').textContent=prog+'%';
+  document.getElementById('stSigns').textContent=lessonInput.length;
+  document.getElementById('stErr').textContent=lessonErrors;
+
+  const corr=[...lessonInput].filter((c,i)=>c===target[i]).length;
+  const acc=lessonInput.length?Math.round(corr/lessonInput.length*100):100;
+  const accEl=document.getElementById('stAcc');
+  accEl.textContent=acc+'%';
+  accEl.className='stc-v'+(acc>=90?' good':acc>=70?' warn':lessonInput.length>0?' bad':'');
+  document.getElementById('hAcc').textContent=acc+'%';
+
+  if(showHints && lessonMode==='practice'){
+    highlightNextKey(target,lessonInput.length,'kbLesson','fl');
+  } else {
+    document.querySelectorAll('#kbLesson .key').forEach(k=>k.classList.remove('nxt'));
+    clearFingers('fl');
+  }
+}
+
+/* ════════════════════════════════════
+   HANDLE LESSON KEY
+════════════════════════════════════ */
+function handleLessonKey(ar){
+  const target=LESSONS_DATA[lang][curLesson].text;
+  if(ar==='BACKSPACE'){
+    if(lessonInput.length>0) lessonInput=lessonInput.slice(0,-1);
+    renderLesson(); return;
+  }
+  if(ar==='SPACE') ar=' ';
+  if(lessonInput.length>=target.length) return;
+  if(!lessonStart){lessonStart=Date.now(); updateStreak();}
+
+  const expected=target[lessonInput.length];
+  const correct=ar===expected;
+
+  if(!correct){
+    lessonErrors++;
+    playSound('error');
+    if(SETTINGS.shake) flashErr(ar,'kbLesson');
+    // Track heatmap
+    for(const row of LAYOUTS[lang].rows) for(const k of row){
+      if(k.c===ar||(lang==='en'&&k.l===ar)){
+        heatmap[k.l]=(heatmap[k.l]||0)+1;
+        lsSet('tm_heatmap_'+lang,JSON.stringify(heatmap));
+        break;
+      }
+    }
+  } else {
+    playSound('click');
+  }
+
+  lessonInput+=ar;
+  flashKeyByChar(ar,'kbLesson');
+  renderLesson();
+
+  if(lessonInput.length>=target.length) setTimeout(finishLesson,500);
+}
+
+/* ════════════════════════════════════
+   FINISH LESSON
+════════════════════════════════════ */
+function finishLesson(){
+  clearInterval(timerInt); clearInterval(wpmInt);
+  const target=LESSONS_DATA[lang][curLesson].text;
+  const ls=LESSONS_DATA[lang][curLesson];
+  const elapsed=lessonStart?(Date.now()-lessonStart)/60000:1;
+  const corr=[...lessonInput].filter((c,i)=>c===target[i]).length;
+  const acc=Math.round(corr/target.length*100);
+  const wpm=Math.max(1,Math.round((lessonInput.replace(/ /g,'').length/5)/elapsed));
+  const starCount=calcStars(acc,wpm,ls);
+  const passed=acc>=(ls.unlock||70);
+
+  playSound(starCount>=3?'star':'complete');
+
+  // Save completed
+  if(passed){
+    let done=getCompleted(lang);
+    if(!done.includes(curLesson)){done.push(curLesson);setCompleted(lang,done);}
+  }
+
+  // Save best WPM
+  let bests=getBests(lang);
+  const prevBest=bests[curLesson]||0;
+  const isNewBest=wpm>prevBest;
+  if(isNewBest) bests[curLesson]=wpm;
+  setBests(lang,bests);
+
+  // Save stars
+  let allStars=getStars(lang);
+  if(starCount>(allStars[curLesson]||0)) allStars[curLesson]=starCount;
+  setStars(lang,allStars);
+
+  // Save session
+  let sess=getSessions(lang);
+  sess.push({l:curLesson,acc,wpm,err:lessonErrors,stars:starCount,ts:Date.now()});
+  setSessions(lang,sess);
+
+  updateSidebar();
+  document.getElementById('hWpm').textContent=wpm+' WPM';
+  document.getElementById('hAcc').textContent=acc+'%';
+
+  // Score page
+  const _arc=document.getElementById('scoreArc');
+  if(_arc){const circumference=364.4;_arc.style.strokeDashoffset=circumference*(1-acc/100);_arc.style.stroke=acc>=90?'var(--green)':acc>=70?'var(--teal)':acc>=50?'var(--orange)':'var(--rose)';}
+  document.getElementById('scorePct').textContent=acc+'%';
+  document.getElementById('scoreStars').textContent=starCount>0?starsStr(starCount):'No stars — keep trying!';
+  document.getElementById('scWpm').textContent=wpm;
+  document.getElementById('scCorrect').textContent=corr;
+  document.getElementById('scErrors').textContent=lessonErrors;
+
+  const msgs=['Keep going! 💪','Better each time! 📈','Nice work! 👍','Great job! 🎯','Excellent! 🔥','Perfect! 🏆'];
+  document.getElementById('scoreMsg').textContent=msgs[Math.min(5,starCount*1+(acc>=90?2:acc>=70?1:0))];
+  document.getElementById('scoreSub').textContent=ls.t;
+
+  const bestEl=document.getElementById('scoreBest');
+  if(isNewBest) bestEl.innerHTML=`🆕 New personal best: <b>${wpm} WPM</b>!`;
+  else bestEl.innerHTML=`Personal best: <b>${prevBest} WPM</b> (this attempt: ${wpm} WPM)`;
+
+  const unlockEl=document.getElementById('scoreUnlock');
+  const nextIdx=curLesson+1;
+  if(passed && nextIdx<LESSONS_DATA[lang].length && isUnlocked(nextIdx-1)){
+    const wasLocked=!getCompleted(lang).includes(nextIdx-1)||!isUnlocked(nextIdx);
+    if(nextIdx<LESSONS_DATA[lang].length){
+      unlockEl.textContent='🔓 Lesson '+(nextIdx+1)+' is now unlocked!';
+      unlockEl.style.display='block';
+    }
+  } else if(!passed){
+    unlockEl.textContent='⚠️ Need 70%+ accuracy for a star. Keep going!';
+    unlockEl.style.display='block';
+  } else {
+    unlockEl.style.display='none';
+  }
+
+  document.getElementById('scoreTitle').textContent='Lesson '+(curLesson+1)+' completed!';
+  goPage('score');
+}
+
+function restartLesson(){startLesson(curLesson);}
+function nextLesson(){
+  const next=curLesson+1;
+  if(next<LESSONS_DATA[lang].length) startLesson(next);
+  else{toast('🏆 All 100 lessons complete! You are a master!');goPage('lessons');}
+}
+
+/* ════════════════════════════════════
+   MODE & HINTS
+════════════════════════════════════ */
+function setMode(m){
+  lessonMode=m;
+  document.getElementById('modeP').classList.toggle('on',m==='practice');
+  document.getElementById('modeT').classList.toggle('on',m==='test');
+  if(m==='test'){
+    document.querySelectorAll('#kbLesson .key').forEach(k=>k.classList.remove('nxt'));
+    clearFingers('fl');
+  }
+  renderLesson();
+}
+function toggleHints(){
+  showHints=document.getElementById('hintToggle').checked;
+  renderLesson();
+}
+function resetStatBar(){
+  ['stSigns','stProg','stWpm','stErr'].forEach(id=>document.getElementById(id).textContent=id==='stProg'?'0%':'0');
+  document.getElementById('stAcc').textContent='100%';
+  document.getElementById('stTime').textContent='00:00';
+  document.getElementById('progFill').style.width='0%';
+}
+
+/* ════════════════════════════════════
+   KEYBOARD BUILD
+════════════════════════════════════ */
+function buildKb(kbId,onKey,fp){
+  const c=document.getElementById(kbId); if(!c) return;
+  c.innerHTML='';
+  LAYOUTS[lang].rows.forEach(row=>{
+    const r=document.createElement('div'); r.className='kb-row';
+    row.forEach(k=>{
+      const btn=document.createElement('button');
+      const cls=['key'];
+      if(k.cls) k.cls.split(' ').forEach(w=>cls.push(w));
+      btn.className=cls.join(' ');
+      if(k.f) btn.dataset.f=k.f;
+      if(k.home) btn.classList.add('home');
+      btn.id=kbId+'_'+k.l;
+      if(k.c&&!k.lbl){
+        btn.innerHTML=`<span style="font-family:${LANG_FONTS[lang]}">${k.c}</span>${k.l&&k.l.length===1?`<span class="lk">${k.l}</span>`:''}`;
+      } else {
+        btn.innerHTML=`<span style="font-family:'Inter',sans-serif;font-size:10px">${k.lbl||k.l}</span>`;
+      }
+      const keyHandler=ar=>{
+        if(k.l==='BS') ar='BACKSPACE';
+        else if(k.l==='SPACE') ar=' ';
+        else if(!k.c) return;
+        else ar=k.c;
+        onKey(ar);
+        if(fp){clearFingers(fp);if(k.f)activateFinger(fp,k.f);}
+      };
+      btn.onmousedown=e=>{e.preventDefault();keyHandler(k.c);};
+      btn.ontouchstart=e=>{e.preventDefault();keyHandler(k.c);};
+      r.appendChild(btn);
+    });
+    c.appendChild(r);
+  });
+}
+
+function buildHeatmapKb(){
+  const c=document.getElementById('kbHeatmap'); if(!c) return;
+  c.innerHTML='';
+  const maxErr=Math.max(1,...Object.values(heatmap));
+  LAYOUTS[lang].rows.forEach(row=>{
+    const r=document.createElement('div'); r.className='kb-row';
+    row.forEach(k=>{
+      const btn=document.createElement('button');
+      const cls=['key'];
+      if(k.cls) k.cls.split(' ').forEach(w=>cls.push(w));
+      const errs=heatmap[k.l]||0;
+      if(errs>0){
+        const level=errs>=10?5:errs>=5?4:errs>=3?3:errs>=2?2:1;
+        cls.push('heat-'+level);
+      }
+      btn.className=cls.join(' ');
+      if(k.c&&!k.lbl){
+        btn.innerHTML=`<span style="font-family:${LANG_FONTS[lang]}">${k.c}</span>${errs>0?`<span class="lk" style="color:var(--rose)">${errs}</span>`:(k.l&&k.l.length===1?`<span class="lk">${k.l}</span>`:'')}`;
+      } else {
+        btn.innerHTML=`<span style="font-family:'Inter',sans-serif;font-size:10px">${k.lbl||k.l}</span>`;
+      }
+      btn.style.cursor='default';
+      r.appendChild(btn);
+    });
+    c.appendChild(r);
+  });
+}
+
+function renderHeatmap(){
+  if(!heatmap||!Object.keys(heatmap).length){const w=document.getElementById('heatmapWrap');if(w)w.innerHTML='<div style="padding:32px;text-align:center;color:var(--text3)">No error data yet — start practicing to see your heatmap!</div>';return;}
+  buildHeatmapKb();
+  const total=Object.values(heatmap).reduce((a,b)=>a+b,0);
+  const worst=Object.entries(heatmap).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const font=LANG_FONTS[lang];
+  document.getElementById('heatSummary').innerHTML=total?
+    `Total errors tracked: <b>${total}</b>. Worst keys: ${worst.map(([k,v])=>`<span style="font-family:${font};color:var(--rose)">${k}</span>(${v})`).join(', ')}`
+    :'No errors tracked yet — complete some lessons!';
+}
+
+function clearHeatmap(){
+  heatmap={};
+  lsSet('tm_heatmap_'+lang,JSON.stringify(heatmap));
+  renderHeatmap();
+  toast('Heatmap cleared!');
+}
+
+function flashKey(kbId,l){
+  const el=document.getElementById(kbId+'_'+l); if(!el) return;
+  el.classList.add('pressed'); setTimeout(()=>el.classList.remove('pressed'),120);
+}
+
+function flashErr(ar,kbId){
+  for(const row of LAYOUTS[lang].rows) for(const k of row){
+    if(k.c===ar||(lang==='en'&&k.l===ar)){
+      const el=document.getElementById(kbId+'_'+k.l);
+      if(el){el.classList.add('err');setTimeout(()=>el.classList.remove('err'),250);}
+      return;
+    }
+  }
+}
+
+function flashKeyByChar(ar,kbId){
+  if(ar===' '){flashKey(kbId,'SPACE');return;}
+  for(const row of LAYOUTS[lang].rows) for(const k of row){
+    if(k.c===ar||(lang==='en'&&k.l===ar)){flashKey(kbId,k.l);return;}
+  }
+}
+
+function highlightNextKey(target,pos,kbId,fp){
+  document.querySelectorAll('#'+kbId+' .key').forEach(k=>k.classList.remove('nxt'));
+  clearFingers(fp);
+  if(!showHints||pos>=target.length) return;
+  const ch=target[pos];
+  if(ch===' '){
+    const el=document.getElementById(kbId+'_SPACE');
+    if(el){el.classList.add('nxt');activateFinger(fp,'lt');activateFinger(fp,'rt');}
+    return;
+  }
+  for(const row of LAYOUTS[lang].rows) for(const k of row){
+    if(k.c===ch||(lang==='en'&&k.l===ch)){
+      const el=document.getElementById(kbId+'_'+k.l);
+      if(el){el.classList.add('nxt');if(k.f&&SETTINGS.fingers)activateFinger(fp,k.f);}
+      return;
+    }
+  }
+}
+
+function clearFingers(pfx){
+  ['lp','lr','lm','li','lt','rt','ri','rm','rr','rp'].forEach(f=>{
+    const el=document.getElementById(pfx+'-'+f);
+    if(el) el.classList.remove('act');
+  });
+}
+function activateFinger(pfx,f){
+  const el=document.getElementById(pfx+'-'+f);
+  if(el) el.classList.add('act');
+}
+
+/* ════════════════════════════════════
+   PHYSICAL KEYBOARD LISTENER
+════════════════════════════════════ */
+document.addEventListener('keydown',e=>{
+  if(e.ctrlKey||e.altKey||e.metaKey) return;
+  if(e.key==='Escape'){closeSettings();return;}
+  const inLesson=curPage==='lesson';
+  const inFree=curPage==='free';
+  if(!inLesson&&!inFree) return;
+  const kbId=inLesson?'kbLesson':'kbFree';
+  const handler=inLesson?handleLessonKey:handleFreeKey;
+  const fp=inLesson?'fl':'ffl';
+  const k=e.key;
+  if(k==='Backspace'){e.preventDefault();handler('BACKSPACE');flashKey(kbId,'BS');return;}
+  if(k===' '){e.preventDefault();handler(' ');flashKey(kbId,'SPACE');if(fp){clearFingers(fp);activateFinger(fp,'lt');activateFinger(fp,'rt');}return;}
+  for(const row of LAYOUTS[lang].rows) for(const kk of row){
+    if(kk.c&&(kk.c===k||(lang==='en'&&kk.l===k))){
+      e.preventDefault();handler(kk.c);flashKey(kbId,kk.l);
+      if(fp){clearFingers(fp);if(kk.f)activateFinger(fp,kk.f);}
+      return;
+    }
+  }
+  if(lang==='en'&&k.length===1){e.preventDefault();handler(k);flashKey(kbId,k);}
+});
+
+// Textarea for RTL OS keyboard
+const tinp=document.getElementById('typingInput');
+tinp.addEventListener('input',function(){
+  if(curPage!=='lesson') return;
+  const val=this.value; this.value='';
+  if(!val) return;
+  for(const ch of val){if(ch!=='\n'&&ch!=='\r') handleLessonKey(ch);}
+});
+tinp.addEventListener('keydown',function(e){
+  if(e.key==='Backspace'){e.preventDefault();handleLessonKey('BACKSPACE');}
+});
+
+/* ════════════════════════════════════
+   FREE PRACTICE
+════════════════════════════════════ */
+function handleFreeKey(ar){
+  if(ar==='BACKSPACE') freeText=freeText.slice(0,-1);
+  else if(ar===' '||ar==='SPACE') freeText+=' ';
+  else freeText+=ar;
+  playSound('click');
+  for(const row of LAYOUTS[lang].rows) for(const k of row){
+    if(k.c===ar||(lang==='en'&&k.l===ar)){
+      flashKey('kbFree',k.l);
+      clearFingers('ffl');if(k.f)activateFinger('ffl',k.f);
+      break;
+    }
+  }
+  renderFreeDisp();
+}
+function renderFreeDisp(){
+  const d=document.getElementById('freeDisp'); if(!d) return;
+  d.style.fontFamily=LANG_FONTS[lang];
+  d.innerHTML=`<span>${freeText}</span><span class="cur"></span>`;
+  const words=freeText.trim()?freeText.trim().split(/\s+/).length:0;
+  document.getElementById('fcount').textContent=freeText.length+' chars · '+words+' words';
+}
+function clearFree(){freeText='';clearFingers('ffl');renderFreeDisp();}
+function copyFree(){navigator.clipboard.writeText(freeText).then(()=>toast('Copied!')).catch(()=>toast('Select text manually'));}
+function downloadFree(){
+  const blob=new Blob([freeText],{type:'text/plain;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='typemaster-text.txt';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+/* ════════════════════════════════════
+   ALPHABET
+════════════════════════════════════ */
+function rebuildAlphabet(){
+  document.getElementById('alpha-title').textContent=LANG_NAMES[lang]+' Alphabet';
+  document.getElementById('detailPanel').className='detail-panel';
+  const g=document.getElementById('alphaGrid'); g.innerHTML='';
+  const colors=['#f5c842','#2dd4bf','#a78bfa','#fb7185','#4ade80','#60a5fa','#fb923c'];
+  const font=LANG_FONTS[lang];
+  const isRTL=LAYOUTS[lang].isRTL;
+  (ALPHABETS[lang]||[]).forEach((l,i)=>{
+    const c=colors[i%colors.length];
+    const d=document.createElement('div'); d.className='acard';
+    d.innerHTML=`<div class="a-big" style="color:${c};font-family:${font}">${l.ar}</div><div class="a-name">${l.name}</div><div class="a-rom">${l.rom}</div>`;
+    d.onclick=()=>{
+      const p=document.getElementById('detailPanel'); p.className='detail-panel open';
+      const pos=isRTL?['Isolated','Initial','Medial','Final']:['Upper','Lower','Print','Script'];
+      p.innerHTML=`
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;flex-wrap:wrap;">
+          <div style="font-family:${font};font-size:48px;line-height:1;color:${c};text-shadow:0 0 18px ${c}44">${l.ar}</div>
+          <div>
+            <div style="font-size:14px;font-weight:700;margin-bottom:2px">${l.name}</div>
+            <div style="font-size:11px;color:var(--text2)">Romanized: ${l.rom}</div>
+          </div>
+          <button class="btn btn-sm" onclick="document.getElementById('detailPanel').className='detail-panel'" style="margin-left:auto">✕ Close</button>
+        </div>
+        <div class="d-forms">${l.forms.map((f,i)=>`<div class="d-form"><div class="d-ar" style="color:${c};font-family:${font}">${f}</div><div class="d-lbl">${pos[i]||''}</div></div>`).join('')}</div>
+        <div class="d-note">${l.note}</div>`;
+      p.scrollIntoView({behavior:'smooth',block:'nearest'});
+    };
+    g.appendChild(d);
+  });
+}
+
+/* ════════════════════════════════════
+   KEY MAP
+════════════════════════════════════ */
+function rebuildKeyMap(){
+  document.getElementById('km-title').textContent=LANG_NAMES[lang]+' Key Map';
+  const font=LANG_FONTS[lang];
+  const g=document.getElementById('mapGrid'); g.innerHTML='';
+  LAYOUTS[lang].rows.forEach(row=>row.forEach(k=>{
+    if(!k.c||!k.l||k.l.length>2||k.lbl) return;
+    const d=document.createElement('div'); d.className='mitem';
+    d.innerHTML=`<div class="m-ar" style="font-family:${font}">${k.c}</div><div class="m-en">${k.l}</div>`;
+    g.appendChild(d);
+  }));
+}
+
+/* ════════════════════════════════════
+   GUIDE
+════════════════════════════════════ */
+function buildGuide(){
+  document.getElementById('guide-sub').textContent='Setup for '+LANG_NAMES[lang]+' typing.';
+  const guides={
+    en:`<div class="gs-h">⌨️ Touch typing fundamentals</div>
+        <div class="gstep">Home row: Left hand on <code>A S D F</code>, right hand on <code>J K L ;</code>. Feel the bumps on F and J — they are your anchors. Always return to home row between keystrokes.</div>
+        <div class="gstep">NEVER look at your keyboard. Use the finger color guide. Your eyes stay on the screen at all times.</div>
+        <div class="gstep">Accuracy first — always. A wrong key takes longer to correct than a slow correct key. Aim for 0 errors before building speed.</div>
+        <div class="gstep">Use Practice mode to learn with hints. Switch to Test mode when you want to test yourself without help.</div>`,
+    ar:`<div class="gs-h">⚙️ Windows Arabic setup (one time only)</div>
+        <div class="gstep">1. Press <code>Win + I</code> → Time & Language → Language & region → Add a language</div>
+        <div class="gstep">2. Search "Arabic" → select <code>Arabic (Saudi Arabia)</code> → Next → Install</div>
+        <div class="gstep">3. Press <code>Win + Space</code> to switch between Arabic and English at any time</div>
+        <div class="gstep">4. Open MS Word — it automatically switches to right-to-left when Arabic is selected</div>
+        <div class="gs-h">📚 Arabic typing facts</div>
+        <div class="gstep">Arabic has 28 letters — all consonants. Short vowels (harakat) are usually omitted in everyday writing.</div>
+        <div class="gstep">6 letters never connect to the following letter: <span style="font-family:'Amiri',serif;font-size:16px;color:var(--gold)">ا د ذ ر ز و</span></div>
+        <div class="gstep">Every Arabic letter has up to 4 forms (isolated, initial, medial, final). These change automatically when you type — you never manually select them.</div>
+        <div class="gstep">Arabic is the 5th most spoken language worldwide — 422 million native speakers.</div>`,
+    ur:`<div class="gs-h">⚙️ Windows Urdu setup</div>
+        <div class="gstep">1. <code>Win + I</code> → Add language → search <code>Urdu (Pakistan)</code> → Install</div>
+        <div class="gstep">2. Press <code>Win + Space</code> to switch to Urdu keyboard anytime</div>
+        <div class="gs-h">📚 Urdu typing facts</div>
+        <div class="gstep">Urdu uses Nastaliq script — a beautiful flowing calligraphic style, visually different from Arabic block script.</div>
+        <div class="gstep">Urdu has letters not in Arabic: <span style="font-family:'Amiri',serif;font-size:16px;color:var(--gold)">پ چ ژ گ ڈ ڑ ٹ ے</span> — added for sounds that don't exist in Arabic.</div>
+        <div class="gstep">Urdu is the national language of Pakistan — spoken by 70+ million people as a native language.</div>`,
+    bn:`<div class="gs-h">⚙️ Bengali typing setup</div>
+        <div class="gstep">Install <strong>Avro Keyboard</strong> (free) from <code>omicronlab.com</code> — supports phonetic input (type "bangla" → বাংলা) and fixed keyboard layout.</div>
+        <div class="gstep">Or: <code>Win + I</code> → Add language → <code>Bangla (Bangladesh)</code> for Windows built-in support.</div>
+        <div class="gs-h">📚 Bengali typing facts</div>
+        <div class="gstep">Bengali is written left-to-right — same direction as English! Much easier to get used to.</div>
+        <div class="gstep">Bengali is the 7th most spoken language globally — 230+ million speakers. Both Bangladesh and the Indian state of West Bengal use it.</div>
+        <div class="gstep">Bangladesh's national anthem (আমার সোনার বাংলা) and India's national anthem (জনগণমন) are both written in Bengali.</div>`,
+  };
+  document.getElementById('guideContent').innerHTML=guides[lang]||'';
+}
+
+/* ════════════════════════════════════
+   STATS
+════════════════════════════════════ */
+function showLangStats(l){
+  statsLangView=l;
+  document.querySelectorAll('#statsLangTabs button').forEach(b=>b.classList.remove('on'));
+  const btn=document.getElementById('stab-'+l); if(btn) btn.classList.add('on');
+  const sess=getSessions(l); const done=getCompleted(l);
+  const bests=getBests(l); const allStars=getStars(l);
+  const best=sess.length?Math.max(...sess.map(s=>s.wpm)):0;
+  const avgAcc=sess.length?Math.round(sess.reduce((a,s)=>a+s.acc,0)/sess.length):0;
+  const avgWpm=sess.length?Math.round(sess.reduce((a,s)=>a+s.wpm,0)/sess.length):0;
+  const totalStars=Object.values(allStars).reduce((a,b)=>a+b,0);
+  const maxStars=LESSONS_DATA[l].length*3;
+
+  document.getElementById('statsGrid').innerHTML=`
+    <div class="st-card"><div class="stc-val" style="color:var(--gold)">${sess.length}</div><div class="stc-lbl">Sessions</div></div>
+    <div class="st-card"><div class="stc-val" style="color:var(--teal)">${best}</div><div class="stc-lbl">Best WPM</div></div>
+    <div class="st-card"><div class="stc-val" style="color:var(--green)">${sess.length?avgAcc+'%':'—'}</div><div class="stc-lbl">Avg accuracy</div></div>
+    <div class="st-card"><div class="stc-val" style="color:var(--blue)">${avgWpm||'—'}</div><div class="stc-lbl">Avg WPM</div></div>
+    <div class="st-card"><div class="stc-val" style="color:var(--purple)">${done.length}/${LESSONS_DATA[l].length}</div><div class="stc-lbl">Lessons done</div></div>
+    <div class="st-card"><div class="stc-val" style="color:var(--gold)">⭐${totalStars}/${maxStars}</div><div class="stc-lbl">Stars earned</div></div>`;
+
+  // WPM history chart
+  const recent=[...sess].slice(-10);
+  const wpmHistory=document.getElementById('wpmHistory');
+  if(recent.length){
+    const maxW=Math.max(...recent.map(s=>s.wpm),1);
+    wpmHistory.innerHTML=recent.map((s,i)=>`
+      <div class="hist-row">
+        <span style="color:var(--text3);min-width:22px">L${s.l+1}</span>
+        <div class="hist-bar-wrap"><div class="hist-bar" style="width:${Math.round(s.wpm/maxW*100)}%"></div></div>
+        <span style="color:var(--teal);min-width:44px;text-align:right">${s.wpm} WPM</span>
+        <span style="color:var(--green);min-width:34px;text-align:right">${s.acc}%</span>
+        <span>${starsStr(s.stars||0)}</span>
+      </div>`).join('');
+  } else {
+    wpmHistory.textContent='No sessions yet.';
+  }
+
+  const hl=document.getElementById('histList');
+  if(!sess.length){hl.textContent='No sessions for '+LANG_NAMES[l]+' yet!';return;}
+  hl.innerHTML=[...sess].reverse().slice(0,15).map(s=>`
+    <div style="display:flex;align-items:center;gap:7px;padding:5px 0;border-bottom:1px solid var(--border);font-size:11px;">
+      <span style="color:var(--text3);min-width:22px">L${s.l+1}</span>
+      <span style="flex:1;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${LESSONS_DATA[l][s.l]?.t||''}</span>
+      <span style="color:var(--teal);flex-shrink:0">${s.wpm} WPM</span>
+      <span style="color:var(--green);flex-shrink:0;min-width:32px;text-align:right">${s.acc}%</span>
+      <span>${starsStr(s.stars||0)}</span>
+    </div>`).join('');
+}
+
+function showStatsLang(l){showLangStats(l);}  /* alias used in stats tabs HTML */
+
+function clearStats(){
+  if(!confirm('Reset ALL progress and stats for all 4 languages? This cannot be undone.')) return;
+  ['en','ar','ur','bn'].forEach(l=>{
+    ['done','sess','bests','stars'].forEach(k=>lsRem('tm_'+k+'_'+l));
+    lsRem('tm_heatmap_'+l);
+  });
+  lsRem('tm_streak'); lsRem('tm_lastDay');
+  heatmap={};
+  showLangStats(statsLangView); updateSidebar(); updateStreak();
+  toast('All stats reset!');
+}
+
+function exportStats(){
+  const data={exported:new Date().toISOString(),languages:{}};
+  ['en','ar','ur','bn'].forEach(l=>{
+    data.languages[l]={sessions:getSessions(l),completed:getCompleted(l),bests:getBests(l),stars:getStars(l)};
+  });
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='typemaster-stats.json'; a.click(); URL.revokeObjectURL(a.href);
+}
+
+function updateSidebar(){
+  const sess=getSessions(lang); const done=getCompleted(lang);
+  const total=LESSONS_DATA[lang].length;
+  document.getElementById('sb-sess').textContent=sess.length;
+  document.getElementById('sb-best').textContent=sess.length?Math.max(...sess.map(s=>s.wpm)):0;
+  document.getElementById('sb-done').textContent=done.length+'/100';
+  const pct=Math.round(done.length/total*100);
+  document.getElementById('sb-pct').textContent=pct+'%';
+  document.getElementById('sb-prog-fill').style.width=pct+'%';
+}
+
+/* ════════════════════════════════════
+   TOAST
+════════════════════════════════════ */
+let toastTimer=null;
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),2400);
+}
+
+/* ════════════════════════════════════
+   CLOSE SETTINGS ON OUTSIDE CLICK
+════════════════════════════════════ */
+document.getElementById('settingsOverlay').addEventListener('click',function(e){
+  if(e.target===this) closeSettings();
+});
+
+/* ════════════════════════════════════
+   INIT
+════════════════════════════════════ */
+rebuildLessons(); rebuildAlphabet(); rebuildKeyMap(); buildGuide(); updateSidebar(); updateStreak(); goPage('lessons');
+// Apply saved settings
+applyFontSize();
+if(!SETTINGS.fingers){
+  document.getElementById('handsRow').style.display='none';
+  const _hrf=document.getElementById('handsRowFree'); if(_hrf) _hrf.style.display='none';
+}
+
+</script>
+</body>
+</html>
